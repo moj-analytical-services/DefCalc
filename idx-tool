@@ -24,8 +24,15 @@ index_obr_pa <- data.frame(index_obr_pa, row.names = 1)
 index_obr_fy <- s3_path_to_full_df("alpha-sandbox/obr_fy.csv")
 index_obr_fy <- data.frame(index_obr_fy, row.names = 1)
 
-#selects index drop down options needed for UI
+#selects index drop down options needed for UI (i.e. removes duplicates)
 index_options <- index_obr_all %>% select(starts_with("yoy_"))
+colnames(index_options) <- substring(colnames(index_options),5)
+
+#alters all column names in dataframes; necessary to match drop down with dataframe YoY column names
+colnames(index_obr_all) <- substring(colnames(index_obr_all),5)
+colnames(index_obr_qtr) <- substring(colnames(index_obr_qtr),5)
+colnames(index_obr_pa) <- substring(colnames(index_obr_pa),5)
+colnames(index_obr_fy) <- substring(colnames(index_obr_fy),5)
 
 #User interface controls
 ui <- shinyUI(fluidPage(
