@@ -24,6 +24,9 @@ index_obr_pa <- data.frame(index_obr_pa, row.names = 1)
 index_obr_fy <- s3_path_to_full_df("alpha-sandbox/obr_fy.csv")
 index_obr_fy <- data.frame(index_obr_fy, row.names = 1)
 
+#selects index drop down options needed for UI
+index_options <- index_obr_all %>% select(starts_with("yoy_"))
+
 #User interface controls
 ui <- shinyUI(fluidPage(
   #title of app
@@ -32,7 +35,7 @@ ui <- shinyUI(fluidPage(
   helpText("Insert useful information/instructions here"),
   sidebarPanel(
     #dropdown menus: indices = different indices available; period = frequency of data; baseyear = year chosen as 'Index=100'
-    selectInput(inputId = "indices", label = "Index", choices = colnames(index_obr_all)),
+    selectInput(inputId = "indices", label = "Index", choices = colnames(index_options)),
     selectInput(inputId = "period", label = "Period Reference", choices = c("Quarterly", "Calendar Year", "Financial Year")),
     uiOutput("base")
   ),
