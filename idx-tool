@@ -107,8 +107,9 @@ server <- function(input, output) {
           formatStyle(columns = c(2:3), 'text-align' = 'right') %>%
           #highlights row which is Base Period
           formatStyle(columns = "Index", target = 'row', backgroundColor = styleEqual(c('100'), c('lightBlue'))) #%>%
-          #highlights rows which are forecasts
-
+          #highlights rows which are forecasts (DOES NOT CURRENTLY WORK)
+          formatStyle(columns = "Period", target = 'row',
+                      backgroundColor = styleEqual(c(''), c('lightYellow')))
       ) 
     }
   })
