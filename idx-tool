@@ -1,11 +1,9 @@
 #Necessary packages
-library(dplyr)
-library(shiny)
-library(readr)
-library(tidyverse)
-#library(openxlsx)
-library(DT)
-library(s3tools)
+library(shiny) #mandatory to create app structure
+library(tidyverse) #dplyr & readr (plus other functionalities)
+#library(openxlsx) #read in/manipulate Excel files
+library(DT) #output table; better functionality than shiny's tables
+library(s3tools) #importing data from AWS
 
 #Download cleaned OBR data .xlsx (not currently in use)
 #download_file_from_s3("alpha-sandbox/obr.xlsx", "obr.xlsx", overwrite = TRUE)
@@ -98,13 +96,19 @@ server <- function(input, output) {
       #produces output table,
       output$indextable <- DT::renderDT(
         datatable(chosen_index$mutate, rownames = F,
+                  #creates display options (i.e. show '10' rows or 'All')
                   options = list(pageLength = 10, info = FALSE, lengthMenu = list(c(10,-1), c("10", "All")))
+                  
         ) %>%
           #formats table to display 2 digits rather than all
           formatRound(columns = c(2), digits = 2) %>%
           formatRound(columns = c(3), digits = 2) %>%
           #aligns output values to provide readable formatting
-          formatStyle(columns = c(2:3), 'text-align' = 'right')
+          formatStyle(columns = c(2:3), 'text-align' = 'right') %>%
+          #highlights row which is Base Period
+          formatStyle(columns = "Index", target = 'row', backgroundColor = styleEqual(c('100'), c('lightBlue'))) #%>%
+          #highlights rows which are forecasts
+
       ) 
     }
   })
