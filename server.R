@@ -54,10 +54,18 @@ shinyServer(function(input, output) {
         mutate(Period = chosen_index$rownames) %>%
         #creates forecast flag column for use in output table ('|' is the R 'or' function, '&' is the 'and' function)
         mutate(is_forecast = ifelse(
-          grepl('^202', Period)| grepl('^2019', Period), 1, 0)
+          (grepl('^202', Period)| grepl('^2019', Period)) &
+          Index != 100,
+          1, 0)
         ) %>%
+        #creates combined forecast and index flag column for use in output table ('|' is the R 'or' function, '&' is the 'and' function)
+        mutate(is_forecast_index = ifelse(
+          (grepl('^202', Period)| grepl('^2019', Period)) &
+          Index == 100,
+          1, 0)
+        ) %>%        
         #selects columns for output table
-        select("Period", "Index", "YoY (%)", "is_forecast")
+        select("Period", "Index", "YoY (%)", "is_forecast", "is_forecast_index")
       
       #produces output table,
       output$indextable <- DT::renderDT(
@@ -78,7 +86,10 @@ shinyServer(function(input, output) {
                       backgroundColor = styleEqual(c('100'), c('lightBlue'))) %>%
           #highlights rows which are forecasts
           formatStyle(columns = "is_forecast", target = 'row',
-                      backgroundColor = styleEqual(c('1'), c('lightYellow')))
+                      backgroundColor = styleEqual(c('1'), c('lightYellow'))) %>%
+          #highlights row if it is both base period and forecast
+          formatStyle(columns = "is_forecast_index", target = 'row',
+                      backgroundColor = styleEqual(c('1'), c('lightGreen')))          
       ) 
     }
   })
