@@ -13,7 +13,7 @@ obr_xlsx = read_excel(temp_obr_xlsx,sheet = "1.7") #1.7 is current tab name for 
 
 #Clean data to prepare for app
 #removes empty first column and removes all extra rows
-obr_xlsx <- obr_xlsx[2:18] #removes column 1
+obr_xlsx <- obr_xlsx[2:18] #removes column 1 (blank)
 obr_xlsx <- obr_xlsx %>% slice(4:100) #removes extra rows
 #renames all columns
 #year on year (% change)
@@ -25,7 +25,7 @@ names(obr_xlsx)[names(obr_xlsx)=="...6"] <- "yoy_POP" #Producer Output Prices
 names(obr_xlsx)[names(obr_xlsx)=="...7"] <- "yoy_MIP" #Mortgage Interest Payments
 names(obr_xlsx)[names(obr_xlsx)=="...8"] <- "yoy_ARH" #Actual rents for housing
 names(obr_xlsx)[names(obr_xlsx)=="...9"] <- "yoy_CExDef" #Consumer expenditure deflator
-names(obr_xlsx)[names(obr_xlsx)=="...10"] <- "yoy_GDPdef" #Gross Domestic Product deflator
+names(obr_xlsx)[names(obr_xlsx)=="...10"] <- "yoy_GDPDef" #Gross Domestic Product deflator
 #index figures (currently unused due to how the app works)
 names(obr_xlsx)[names(obr_xlsx)=="...11"] <- "index_RPI" #Jan1987=100
 names(obr_xlsx)[names(obr_xlsx)=="...12"] <- "index_RPIX" #Jan1987=100
@@ -59,7 +59,7 @@ writeData(obr, sheet = "pa", obr_xlsx_pa, colNames = TRUE, rowNames = TRUE)
 writeData(obr, sheet = "fy", obr_xlsx_fy, colNames = TRUE, rowNames = TRUE)
 saveWorkbook(obr, "obr.xlsx", overwrite = TRUE)
 
-#Save dataframes as both .xlsx and .csv files
+#Save dataframes as both .xlsx and .csv files (only .csv is used in app)
 library(s3tools)
 write_file_to_s3("obr.xlsx", "alpha-sandbox/obr.xlsx", overwrite = TRUE)
 write_df_to_csv_in_s3(obr_xlsx, "alpha-sandbox/obr_all.csv", overwrite = TRUE)
@@ -67,3 +67,5 @@ write_df_to_csv_in_s3(obr_xlsx_qtr, "alpha-sandbox/obr_qtr.csv", overwrite = TRU
 write_df_to_csv_in_s3(obr_xlsx_pa, "alpha-sandbox/obr_pa.csv", overwrite = TRUE)
 write_df_to_csv_in_s3(obr_xlsx_fy, "alpha-sandbox/obr_fy.csv", overwrite = TRUE)
 
+#deletes obr.xlsx from directory
+file.remove("obr.xlsx")
