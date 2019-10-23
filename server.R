@@ -54,16 +54,15 @@ shinyServer(function(input, output) {
         mutate(Period = chosen_index$rownames) %>%
         #creates forecast flag column for use in output table ('|' is the R 'or' function, '&' is the 'and' function)
         mutate(is_forecast = ifelse(
-          (grepl('^202', Period)| grepl('^2019', Period)) &
-          Index != 100,
+          (grepl('^202', Period)| grepl('^2019', Period)) 
+          & Index != 100,
           1, 0)
         ) %>%
-        #creates combined forecast and index flag column for use in output table ('|' is the R 'or' function, '&' is the 'and' function)
         mutate(is_forecast_index = ifelse(
-          (grepl('^202', Period)| grepl('^2019', Period)) &
-          Index == 100,
+          (grepl('^202', Period)| grepl('^2019', Period)) 
+          & Index == 100,
           1, 0)
-        ) %>%        
+        ) %>%
         #selects columns for output table
         select("Period", "Index", "YoY (%)", "is_forecast", "is_forecast_index")
       
@@ -72,7 +71,7 @@ shinyServer(function(input, output) {
         datatable(chosen_index$mutate, rownames = F,
                   #creates display options (i.e. show '10' rows or 'All' rows)
                   options = list(pageLength = -1, info = FALSE, lengthMenu = list(c(-1, 10), c("All", "10")), 
-                                 columnDefs = list(list(visible = FALSE, targets = c(3)))
+                                 columnDefs = list(list(visible = FALSE, targets = c(3:4)))
                                  )
                   
         ) %>%
@@ -87,10 +86,10 @@ shinyServer(function(input, output) {
           #highlights rows which are forecasts
           formatStyle(columns = "is_forecast", target = 'row',
                       backgroundColor = styleEqual(c('1'), c('lightYellow'))) %>%
-          #highlights row if it is both base period and forecast
           formatStyle(columns = "is_forecast_index", target = 'row',
-                      backgroundColor = styleEqual(c('1'), c('lightGreen')))          
-      ) 
+                    backgroundColor = styleEqual(c('1'), c('lightGreen')))
+      )
     }
   })
 })
+
