@@ -393,6 +393,12 @@ Version: 1.4.1
 Hash: b01fe6ae05ec2a30a777dc338af5bf69
 Requires: askpass
 
+Package: openxlsx
+Source: CRAN
+Version: 4.1.0.1
+Hash: 6e768348a5c03d13406eaf1b6101d4af
+Requires: Rcpp, zip
+
 Package: packrat
 Source: CRAN
 Version: 0.5.0
@@ -734,3 +740,8 @@ Package: zeallot
 Source: CRAN
 Version: 0.1.0
 Hash: 10b2ed48e202b4db421ae864041dc4b2
+
+Package: zip
+Source: CRAN
+Version: 2.0.4
+Hash: f86b0ae5776b2e3880871fb0e34e5e48
