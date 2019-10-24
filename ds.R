@@ -8,8 +8,8 @@ library(s3tools)
 #Import online Excel OBR datafile into R, through an indirect URL
 obr_url = GET("https://obr.uk/download/march-2019-economic-and-fiscal-outlook-supplementary-economy-tables/") #update url when new database available
 temp_obr_xlsx = tempfile(fileext = ".xlsx")
-download.file(obr_url$url,destfile = temp_obr_xlsx,mode = "wb")
-obr_xlsx = read_excel(temp_obr_xlsx,sheet = "1.7") #1.7 is current tab name for Inflation tab
+download.file(obr_url$url, destfile = temp_obr_xlsx,mode = "wb")
+obr_xlsx = read_excel(temp_obr_xlsx, sheet = "1.7") #1.7 is current tab name for Inflation tab
 
 #Clean data to prepare for app
 #removes empty first column and removes all extra rows
@@ -19,7 +19,7 @@ obr_xlsx <- obr_xlsx %>% slice(4:100) #removes extra rows
 #year on year (% change)
 names(obr_xlsx)[names(obr_xlsx)=="...2"] <- "yoy_Period" #time period reference
 names(obr_xlsx)[names(obr_xlsx)=="...3"] <- "yoy_Retail Price Index" #Retail Prices Index
-names(obr_xlsx)[names(obr_xlsx)=="...4"] <- "yoy_Retail Price Index (exc MIP) " #RPI excluding mortgage interest payments
+names(obr_xlsx)[names(obr_xlsx)=="...4"] <- "yoy_Retail Price Index excl MIP" #RPI excluding mortgage interest payments
 names(obr_xlsx)[names(obr_xlsx)=="...5"] <- "yoy_Consumer Price Index" #Consumer Price Index
 names(obr_xlsx)[names(obr_xlsx)=="...6"] <- "yoy_Producer Output Prices" #Producer Output Prices
 names(obr_xlsx)[names(obr_xlsx)=="...7"] <- "yoy_Mortgage Interest Payments" #Mortgage Interest Payments
@@ -36,10 +36,10 @@ names(obr_xlsx)[names(obr_xlsx)=="...16"] <- "index_ARH" #2015=100
 names(obr_xlsx)[names(obr_xlsx)=="...17"] <- "index_CExDef" #2016=100
 names(obr_xlsx)[names(obr_xlsx)=="...18"] <- "index_GDPdef" #2016=100
 
-#creates datatables for data by quarter, annual, and financial year splits
-obr_xlsx_qtr <- obr_xlsx %>% slice(1:65) #quarterly
-obr_xlsx_pa <- obr_xlsx %>% slice(66:81) #calendar
-obr_xlsx_fy <- obr_xlsx %>% slice(82:97) #financial year
+#creates dataframes for data by quarter, annual and financial year splits flexibly (i.e. auto-updates with new spreadsheet)
+obr_xlsx_qtr <- filter(obr_xlsx, grepl("Q", obr_xlsx$yoy_Period)) #quarterly
+obr_xlsx_pa <- filter(obr_xlsx, nchar(obr_xlsx$yoy_Period, type = "chars") == 4, TRUE) #calendar
+obr_xlsx_fy <- filter(obr_xlsx, grepl("/", obr_xlsx$yoy_Period))  #financial
 
 #Adds row names to all dataframes (doing this at the start doesn't copy them to new dataframes)
 obr_xlsx <- data.frame(obr_xlsx, row.names = 1)
@@ -69,3 +69,4 @@ write_df_to_csv_in_s3(obr_xlsx_fy, "alpha-sandbox/obr_fy.csv", overwrite = TRUE)
 
 #deletes obr.xlsx from directory
 file.remove("obr.xlsx")
+
