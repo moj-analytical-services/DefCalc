@@ -18,14 +18,14 @@ obr_xlsx <- obr_xlsx %>% slice(4:100) #removes extra rows
 #renames all columns
 #year on year (% change)
 names(obr_xlsx)[names(obr_xlsx)=="...2"] <- "yoy_Period" #time period reference
-names(obr_xlsx)[names(obr_xlsx)=="...3"] <- "yoy_RPI" #Retail Prices Index
-names(obr_xlsx)[names(obr_xlsx)=="...4"] <- "yoy_RPIX" #RPI excluding mortgage interest payments
-names(obr_xlsx)[names(obr_xlsx)=="...5"] <- "yoy_CPI" #Consumer Price Index
-names(obr_xlsx)[names(obr_xlsx)=="...6"] <- "yoy_POP" #Producer Output Prices
-names(obr_xlsx)[names(obr_xlsx)=="...7"] <- "yoy_MIP" #Mortgage Interest Payments
-names(obr_xlsx)[names(obr_xlsx)=="...8"] <- "yoy_ARH" #Actual rents for housing
-names(obr_xlsx)[names(obr_xlsx)=="...9"] <- "yoy_CExDef" #Consumer expenditure deflator
-names(obr_xlsx)[names(obr_xlsx)=="...10"] <- "yoy_GDPDef" #Gross Domestic Product deflator
+names(obr_xlsx)[names(obr_xlsx)=="...3"] <- "yoy_Retail Price Index" #Retail Prices Index
+names(obr_xlsx)[names(obr_xlsx)=="...4"] <- "yoy_Retail Price Index (exc MIP) " #RPI excluding mortgage interest payments
+names(obr_xlsx)[names(obr_xlsx)=="...5"] <- "yoy_Consumer Price Index" #Consumer Price Index
+names(obr_xlsx)[names(obr_xlsx)=="...6"] <- "yoy_Producer Output Prices" #Producer Output Prices
+names(obr_xlsx)[names(obr_xlsx)=="...7"] <- "yoy_Mortgage Interest Payments" #Mortgage Interest Payments
+names(obr_xlsx)[names(obr_xlsx)=="...8"] <- "yoy_Actual Rents for Housing" #Actual rents for housing
+names(obr_xlsx)[names(obr_xlsx)=="...9"] <- "yoy_Consumer Expenditure Deflator" #Consumer expenditure deflator
+names(obr_xlsx)[names(obr_xlsx)=="...10"] <- "yoy_Gross Domestic Product Deflator" #Gross Domestic Product deflator
 #index figures (currently unused due to how the app works)
 names(obr_xlsx)[names(obr_xlsx)=="...11"] <- "index_RPI" #Jan1987=100
 names(obr_xlsx)[names(obr_xlsx)=="...12"] <- "index_RPIX" #Jan1987=100
