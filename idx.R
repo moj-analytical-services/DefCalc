@@ -1,5 +1,5 @@
 #Necessary packages
-library(tidyverse) #dplyr & readr (plus other functionalities)
+library(tidyverse) #dplyr & readr & stringr (plus other functionalities)
 #library(openxlsx) #read in/manipulate Excel files
 library(DT) #output table; better functionality than shiny's tables
 library(s3tools) #importing data from AWS
@@ -24,6 +24,9 @@ index_obr_fy <- data.frame(index_obr_fy, row.names = 1)
 #selects index drop down options needed for UI (i.e. removes duplicates)
 index_options <- index_obr_all %>% select(starts_with("yoy_"))
 colnames(index_options) <- substring(colnames(index_options),5)
+#replace '.' with " " and ".." with '(' or ')'
+str_replace(colnames(index_options, "\\.", " ")
+            str_replace(colnames(index_options, "\\.", " ")
 
 #alters all column names in dataframes; necessary to match drop down with dataframe YoY column names
 colnames(index_obr_all) <- substring(colnames(index_obr_all),5)
