@@ -3,6 +3,7 @@ library(tidyverse) #dplyr & readr & stringr (plus other functionalities)
 #library(openxlsx) #read in/manipulate Excel files
 library(s3tools) #importing data from AWS
 library(DT) #required to produce output table
+library(rhandsontable) #required to add tabs to UI
 
 #Download cleaned OBR data .xlsx (not currently in use)
 #download_file_from_s3("alpha-sandbox/obr.xlsx", "obr.xlsx", overwrite = TRUE)
