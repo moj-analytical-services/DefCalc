@@ -40,3 +40,11 @@ colnames(index_obr_pa) <- colnames(index_obr_pa) %>%
 colnames(index_obr_fy) <- colnames(index_obr_fy) %>%
   substring(5) %>%
   str_replace_all("[.]", " ")
+
+#date information, to work out which years are forecasts
+curr_year <- as.numeric(
+                substr(Sys.Date(), 1, 4)
+                        )
+fcst_years <- as.character(
+                c(curr_year, curr_year+1, curr_year+2, curr_year+3, curr_year+4, curr_year+5)
+                          )
