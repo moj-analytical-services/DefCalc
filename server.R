@@ -11,7 +11,8 @@ library(shiny)
 
 # Server logic required to create output
 shinyServer(function(input, output) {
-  
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ INDICES TABLE | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   #creates variable to that aligns with the app's default settings (i.e. prevents loading errors)
   chosen_index = reactiveValues(rownames = rownames(index_obr_qtr), data = index_obr_qtr)
   
@@ -113,5 +114,10 @@ shinyServer(function(input, output) {
       )
     }
   })
+  
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ INDICES TABLE | END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  
+
+  
 })
 

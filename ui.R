@@ -23,5 +23,10 @@ ui = shinyUI(fluidPage(
     selectInput(inputId = "period", label = "Period Reference", choices = c("Quarterly", "Calendar Year", "Financial Year")),
     uiOutput("base")
   ),
-  mainPanel(dataTableOutput("indextable"))
+  mainPanel(
+    tabsetPanel(
+      tabPanel("Indices", dataTableOutput("indextable")),
+      tabPanel("Deflator Calculator", rHandsontableOutput("defcalc"))
+    )
+  )
 ))
