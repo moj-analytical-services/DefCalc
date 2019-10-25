@@ -58,28 +58,38 @@ shinyServer(function(input, output) {
         #creates column for periods (e.g. 2008, 2009...)
         mutate(Period = chosen_index$rownames) %>%
         
-        #creates forecast flag column for use in output table ('|' is the R 'or' function, '&' is the 'and' function)
-        mutate(is_forecast = ifelse(
-          (grepl('^202', Period)| grepl('^2019', Period)) 
-          & Index != 100,
+        #creates flag columns for use in output table ('|' is the R 'or' function, '&' is the 'and' function)
+        #is the base year, and not forecast ('round()' required for 'Default' option)
+        mutate(is_base = ifelse(
+          !grepl(paste(fcst_years, collapse ="|"), Period)
+          & ((round(Index, digits = 2)) == 100),
           1, 0)
         ) %>%
-        mutate(is_forecast_index = ifelse(
-          (grepl('^202', Period)| grepl('^2019', Period)) 
-          & Index == 100,
+        
+        #is forecast, but not base year
+        mutate(is_forecast = ifelse(
+          grepl(paste(fcst_years, collapse ="|"), Period) 
+          & ((round(Index, digits = 2)) != 100),
+          1, 0)
+        ) %>%
+        
+        #is base year and forecast
+        mutate(is_forecast_base = ifelse(
+          grepl(paste(fcst_years, collapse ="|"), Period)
+          & ((round(Index, digits = 0)) == 100),
           1, 0)
         ) %>%
         
         #selects columns for output table
-        select("Period", "Index", "YoY (%)", "is_forecast", "is_forecast_index")
-      
+        select("Period", "Index", "YoY (%)", "is_base", "is_forecast", "is_forecast_base")
+
       #produces output table,
       output$indextable <- DT::renderDT(
         datatable(chosen_index$mutate, rownames = F,
                   
                   #creates display options (i.e. show '10' rows or 'All' rows)
                   options = list(pageLength = -1, info = FALSE, lengthMenu = list(c(-1, 10), c("All", "10")), 
-                                 columnDefs = list(list(visible = FALSE, targets = c(3:4)))
+                                 columnDefs = list(list(visible = FALSE, targets = c(3:5)))
                                  )
                   
         ) %>%
@@ -91,13 +101,14 @@ shinyServer(function(input, output) {
           formatStyle(columns = c(2:3), 'text-align' = 'right') %>%
           
           #highlights row which is Base Period
-          formatStyle(columns = "Index", target = 'row',
-                      backgroundColor = styleEqual(c('100'), c('lightBlue'))) %>%
+          formatStyle(columns = "is_base", target = 'row',
+                      backgroundColor = styleEqual(c('1'), c('lightBlue'))) %>%
           
           #highlights rows which are forecasts
           formatStyle(columns = "is_forecast", target = 'row',
                       backgroundColor = styleEqual(c('1'), c('lightYellow'))) %>%
-          formatStyle(columns = "is_forecast_index", target = 'row',
+          #highlights row which is base and forecast (if applicable)
+          formatStyle(columns = "is_forecast_base", target = 'row',
                     backgroundColor = styleEqual(c('1'), c('lightGreen')))
       )
     }
