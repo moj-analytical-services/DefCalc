@@ -15,6 +15,10 @@ source("./idx.R")
 # UI for Indexation app
 ui = navbarPage("Indexation Tool",
                 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ INDICES TABLE | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  
+#all variables pre-fixed with 'i_' to prevent duplication with other outputs                
+                
     #guidance tab
     tabPanel("Guidance",
        mainPanel(
@@ -36,8 +40,13 @@ ui = navbarPage("Indexation Tool",
        mainPanel(dataTableOutput("i_indextable")
        )
     ),
+ 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ INDICES TABLE | END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DEFLATOR CALCULATOR | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
                 
-    #deflator calculator tab (inputs pre-fixed with 'dc_')
+#all variables pre-fixed with 'dc_' to prevent duplication with other outputs                
+                
     tabPanel("Deflator Calculator",
       sidebarPanel(
       #dropdown menus: indices = different indices available; period = frequency of data; realnom = real or nominal adjustment; slideryears = years covered in input data
