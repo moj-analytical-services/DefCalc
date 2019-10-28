@@ -2,8 +2,7 @@
 library(httr)
 library(readxl)
 library(openxlsx)
-<<<<<<< HEAD
-library(dplyr)
+library(tidyverse)
 library(s3tools)
 library(RCurl)
 library(stringr)
@@ -15,7 +14,7 @@ date_back$mon <- date_back$mon - 12
 latest_url <- format(seq(date_back,date_today,"month"),"%B-%Y") %>% as.data.frame(col.names = "Dates")
 names(latest_url) <- "Date"
 
-#Create URLs and test if they exist, create column of URLS and replace with the months_years from above. Check if each URL exists. 
+#Create URLs and test if they exist. Do so by creating a column of URLS and replace with the months_years from above, then check if each URL exists. 
 latest_url$urls <- ourl
 sub = function(x,y,z)gsub(x,y,z)
 latest_url$urls <- mapply(sub,"March-2019",latest_url$Date,latest_url$urls)
@@ -55,32 +54,6 @@ obrsheet <- gsub(infpat,'\\1',obrsheet)
 obr_xlsx = read_excel(temp_obr_xlsx,sheet = obrsheet) #1.7 is current tab name for Inflation tab
 
 #Clean data to prepare for app
-#removes empty first column and removes all extra rows
-obr_xlsx <- obr_xlsx[2:18] #removes column 1 (blank)
-obr_xlsx <- obr_xlsx %>% slice(4:100) #removes extra rows
-
-#renames all columns
-#year on year (% change)
-columns <- outer(c("Period","Retail Price Index","Retail Price Index (exc MIP)","Consumer Price Index","Producer Output Prices","Mortgage Interest Payments","Actual Rents for Housing","Consumer Expenditure Deflator","Gross Domestic Product Deflator"),c("_yoy","_index"),FUN = paste0)
-dim(columns) <- NULL
-columns <- columns[1:17]
-names(obr_xlsx) = columns
-                 
-#creates datatables for data by quarter, annual, and financial year splits
-obr_xlsx_qtr <- obr_xlsx %>% slice(1:65) #quarterly
-obr_xlsx_pa <- obr_xlsx %>% slice(66:81) #calendar
-obr_xlsx_fy <- obr_xlsx %>% slice(82:97) #financial year
-=======
-library(tidyverse)
-library(s3tools)
-
-#Import online Excel OBR datafile into R, through an indirect URL
-obr_url = GET("https://obr.uk/download/march-2019-economic-and-fiscal-outlook-supplementary-economy-tables/") #update url when new database available
-temp_obr_xlsx = tempfile(fileext = ".xlsx")
-download.file(obr_url$url, destfile = temp_obr_xlsx,mode = "wb")
-obr_xlsx = read_excel(temp_obr_xlsx, sheet = "1.7") #1.7 is current tab name for Inflation tab
-
-#Clean data to prepare for app
 #removes empty columns based on if they're entirely 'NA'
 obr_xlsx <- obr_xlsx[, colSums(is.na(obr_xlsx)) != nrow(obr_xlsx)]
 #removes extra rows if they contain any 'NA'; Column 1 assumed to be 'Period', so name is 'NA'
@@ -104,7 +77,6 @@ names(obr_xlsx)[names(obr_xlsx)=="yoy_Period"] <- "Period" #time period referenc
 obr_xlsx_qtr <- filter(obr_xlsx, grepl("Q", obr_xlsx$Period)) #quarterly
 obr_xlsx_pa <- filter(obr_xlsx, nchar(obr_xlsx$Period, type = "chars") == 4, TRUE) #calendar
 obr_xlsx_fy <- filter(obr_xlsx, grepl("/", obr_xlsx$Period))  #financial
->>>>>>> 90f6b53d93f9dd0c965769bf7140d189b53e95c1
 
 #Adds row names to all dataframes (doing this at the start doesn't copy them to new dataframes)
 obr_xlsx <- data.frame(obr_xlsx, row.names = 1)
@@ -122,28 +94,25 @@ writeData(obr, sheet = "all", obr_xlsx, colNames = TRUE, rowNames = TRUE)
 writeData(obr, sheet = "qtr", obr_xlsx_qtr, colNames = TRUE, rowNames = TRUE)
 writeData(obr, sheet = "pa", obr_xlsx_pa, colNames = TRUE, rowNames = TRUE)
 writeData(obr, sheet = "fy", obr_xlsx_fy, colNames = TRUE, rowNames = TRUE)
-<<<<<<< HEAD
+
 saveWorkbook(obr, "Economy_supplementary_tables_March_2019.xlsx", overwrite = TRUE)
 
 #Save dataframes as both .xlsx and .csv files (only .csv is used in app)
-library(s3tools)
 write_file_to_s3("obr.xlsx", "alpha-sandbox/Economy_supplementary_tables_March_2019.xlsx", overwrite = TRUE)
-=======
 saveWorkbook(obr, "obr.xlsx", overwrite = TRUE)
 
 #Save dataframes as both .xlsx and .csv files (only .csv is used in app)
 library(s3tools)
 write_file_to_s3("obr.xlsx", "alpha-sandbox/obr.xlsx", overwrite = TRUE)
->>>>>>> 90f6b53d93f9dd0c965769bf7140d189b53e95c1
+
 write_df_to_csv_in_s3(obr_xlsx, "alpha-sandbox/obr_all.csv", overwrite = TRUE)
 write_df_to_csv_in_s3(obr_xlsx_qtr, "alpha-sandbox/obr_qtr.csv", overwrite = TRUE)
 write_df_to_csv_in_s3(obr_xlsx_pa, "alpha-sandbox/obr_pa.csv", overwrite = TRUE)
 write_df_to_csv_in_s3(obr_xlsx_fy, "alpha-sandbox/obr_fy.csv", overwrite = TRUE)
 
 #deletes obr.xlsx from directory
-<<<<<<< HEAD
 file.remove("Economy_supplementary_tables_March_2019.xlsx")
-=======
 file.remove("obr.xlsx")
 
->>>>>>> 90f6b53d93f9dd0c965769bf7140d189b53e95c1
+
+
