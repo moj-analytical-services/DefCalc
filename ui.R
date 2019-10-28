@@ -12,21 +12,40 @@ library(shiny)
 source("./idx.R")
 
 # UI for Indexation app
-ui = shinyUI(fluidPage(
-  #title of app
-  headerPanel('Indexation Tool'),
-  #text instructions/guidance
-  helpText("Insert useful information/instructions here"),
-  sidebarPanel(
-    #dropdown menus: indices = different indices available; period = frequency of data; baseyear = year chosen as 'Index=100'
-    selectInput(inputId = "indices", label = "Index", choices = colnames(index_options)),
-    selectInput(inputId = "period", label = "Period Reference", choices = c("Quarterly", "Calendar Year", "Financial Year")),
-    uiOutput("base")
-  ),
-  mainPanel(
-    tabsetPanel(
-      tabPanel("Indices", dataTableOutput("indextable")),
-      tabPanel("Deflator Calculator", rHandsontableOutput("defcalc"))
-    )
-  )
-))
+ui = navbarPage("Indexation Tool",
+                
+                #guidance tab
+                tabPanel("Guidance",
+                         mainPanel(
+                           h1("Guidance"), h3("Info"),
+                           h2("Indices"), h3("Info"),
+                           h2("Deflator Calculator"), h3("Info"),
+                           h2("Placeholder"), h3("Info")
+                         )
+                ),
+                
+                #indices tab
+                tabPanel("Indices",
+                         sidebarPanel(
+                           #dropdown menus: indices = different indices available; period = frequency of data; baseyear = year chosen as 'Index=100'
+                           selectInput(inputId = "indices", label = "Index", choices = colnames(index_options)),
+                           selectInput(inputId = "period", label = "Period Reference", choices = c("Quarterly", "Calendar Year", "Financial Year")),
+                           uiOutput("base")
+                         ),
+                         mainPanel(dataTableOutput("indextable")
+                         )
+                ),
+                
+                #deflator calculator tab
+                navbarMenu("Deflator Calculator",
+                           #sub-tab for user to input data
+                           tabPanel("Input"
+                                    
+                           ),
+                           #sub-tab to display output data once user's input data is transformed
+                           tabPanel("Output"
+                                    
+                           )
+                           
+                )
+)
