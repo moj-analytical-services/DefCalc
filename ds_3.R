@@ -31,7 +31,7 @@ s3files <- s3tools::list_files_in_buckets('alpha-sandbox')
 mypattern = 'Economy_supplementary_tables_(.*).*'
 gg = grep(mypattern,s3files$filename) #Find the pattern above in the list of s3 files, this tells me the number of the file in that list.  
 econ = s3files$filename[gg] #Create a variable called econ, which is the filename of the file that contains the pattern.  
-latest_url$s3 <- ifelse((latest_url$filename == econ),1,0) #Identify which hyperlink / file in the latest_url dataframe corresponds to the file in s3.   
+latest_url$s3 <- ifelse((latest_url$filename %in% econ),1,0) #Identify which hyperlink / file in the latest_url dataframe corresponds to the file in s3.   
 latest_url$latest <- as.Date(paste0(latest_url$Date,"-01"),format ='%B-%Y-%d') #Create new column that formats the month-year column into a date format (e.g. dd/mm/yyyy).
 maxi <- max(latest_url$latest[latest_url$exist == TRUE]) #Find the latest date of those URLs that exist. 
 latest_url$latest <- ifelse(latest_url$latest == maxi,1,0) #Confirm which is the latest date in the list. 
