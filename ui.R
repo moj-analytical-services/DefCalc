@@ -13,6 +13,7 @@ library(shinyWidgets)
 source("./idx.R")
 
 # UI for Indexation app
+
 ui = navbarPage("Indexation Tool",
                 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ INDICES TABLE | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
