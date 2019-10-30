@@ -37,7 +37,7 @@ maxi <- max(latest_url$latest[latest_url$exist == TRUE]) #Find the latest date o
 latest_url$latest <- ifelse(latest_url$latest == maxi,1,0) #Confirm which is the latest date in the list. 
 latest_url$updatereq <- ifelse((latest_url$exist == TRUE & latest_url$s3 == 0 & latest_url$latest == 1),1,0) #If the URL exists, there is no file in s3 and the month is the latest then an udpate is required. 
 
-updateurl <- ifelse(length(latest_url$urls[latest_url$updatereq == 1]) == 0,latest_url$urls[latest_url$s3 == 1],latest_url$urls[latest_url$updatereq == 1])
+updateurl <- ifelse(length(latest_url$urls[latest_url$updatereq == 1]) == 0,latest_url$urls[latest_url$s3 == 1 & latest_url$latest == 1],latest_url$urls[latest_url$updatereq == 1])
 
 #Import online Excel OBR datafile into R, through an indirect URL
 ourl = updateurl
