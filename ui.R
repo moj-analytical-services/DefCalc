@@ -16,8 +16,8 @@ source("./idx.R")
 
 ui = 
   fluidPage(
-    
-  div(img(src = "MoJ_logo.png", width = "8%", height = "8%"), "DASD Indexation Tool", style= {"padding: 8px ; color: black ; font-size: 150%"}),
+
+  div(img(src = "MoJ_logo.png", width = "8%", height = "8%"), div("DASD Indexation Tool", style = "text-align: center; position: absolute; top: 3%; left: 40%; font-weight: bold; font-family: Arial, Helvetica, sans-serif"), style= {"padding: 8px ; color: black ; font-size: 150%"}),
   
   navbarPage("",
                  
@@ -26,9 +26,12 @@ ui =
 # all variables pre-fixed with 'i_' to prevent duplication with other outputs                
                 
 # guidance tab
+
   tabPanel("Guidance",
          mainPanel(
-           htmlTemplate("www/HTMLTEST.html")
+           h1("Version", style = "font-weight: bold; font-family: Arial, Helvetica, sans-serif; border-bottom:1px solid black"),
+           p("This is using", temp_obr_xlsx, style = "margin-left: 1em"),
+           htmlTemplate("www/HTMLTEST.html"), width = 12
          )
   ),
                 
