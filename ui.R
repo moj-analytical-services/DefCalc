@@ -20,7 +20,7 @@ ui =
   div(img(src = "MoJ_logo.png", width = "8%", height = "8%"), "DASD Indexation Tool", style= {"padding: 8px ; color: black ; font-size: 150%"}),
   
   navbarPage("",
-                  
+                 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ INDICES TABLE | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                 
 # all variables pre-fixed with 'i_' to prevent duplication with other outputs                
@@ -28,7 +28,7 @@ ui =
 # guidance tab
   tabPanel("Guidance",
          mainPanel(
-           htmlTemplate("HTMLTEST.html")
+           htmlTemplate("www/HTMLTEST.html")
          )
   ),
                 
@@ -57,7 +57,7 @@ tabPanel("Deflator Calculator",
      selectInput(inputId = "dc_realnom", label = "Conversion: Real/Nominal", choices = c("Real to Nominal", "Nominal to Real")),
      uiOutput("dc_fromto"),
      selectInput(inputId = "dc_period", label = "Period Reference", choices = c("Quarterly", "Calendar Year", "Financial Year")),
-     uiOutput("dc_slideryears")
+     uiOutput("dc_sliderperiod")
    ),
                          
   mainPanel(
