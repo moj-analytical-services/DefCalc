@@ -14,8 +14,13 @@ source("./idx.R")
 
 # UI for Indexation app
 
-ui = navbarPage("Indexation Tool",
-                
+ui = 
+  fluidPage(
+    
+  div(img(src = "MoJ_logo.png", width = "8%", height = "8%"), "DASD Indexation Tool", style= {"padding: 8px ; color: black ; font-size: 150%"}),
+  
+  navbarPage("",
+                  
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ INDICES TABLE | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                 
 # all variables pre-fixed with 'i_' to prevent duplication with other outputs                
@@ -23,14 +28,7 @@ ui = navbarPage("Indexation Tool",
 # guidance tab
   tabPanel("Guidance",
          mainPanel(
-           h1("Guidance"), 
-            h4("Please ensure the guidance is read thoroughly to ensure the tool is not misused."),
-           h2("Indices"), 
-            h4("Provides information on commonly used, publicly published indices"),
-           h2("Deflator Calculator"),
-            h4("Allows one to convert monetary figures from real values to nominal values, and vice versa."),
-           h2("Placeholder"), 
-            h4("Info")
+           htmlTemplate("HTMLTEST.html")
          )
   ),
                 
@@ -80,4 +78,5 @@ tabPanel("Deflator Calculator",
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DEFLATOR CALCULATOR | END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+)
 )
