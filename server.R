@@ -9,6 +9,7 @@
 
 library(shiny)
 library(shinyWidgets)
+library(dqshiny)
 
 # Server logic required to create output
 shinyServer(function(input, output) {
@@ -145,8 +146,8 @@ shinyServer(function(input, output) {
   })
   
   # generates correct slider options in defcalc user interface, based on user input
-  output$dc_slideryears <- renderUI({
-    sliderTextInput(inputId = "dc_slideryears", label = "Input Time Period",
+  output$dc_sliderperiod <- renderUI({
+    sliderTextInput(inputId = "dc_sliderperiod", label = "Input Time Period",
                     choices = dc_chosenindex$rownames,
                     selected = dc_chosenindex$rownames[c(1, nrow(dc_chosenindex$data))]
     )
@@ -155,27 +156,46 @@ shinyServer(function(input, output) {
   # generates dropdown options for convert from/to, based on user input
   output$dc_fromto <- renderUI({
     if (input$dc_realnom == "Real to Nominal") {
-      selectInput(inputId = "dc_fromto", label = "Convert From: Period", choices = c(dc_chosenindex$rownames))
-      } else { selectInput(inputId = "dc_fromto", label = "Convert To: Period", choices = c(dc_chosenindex$rownames))
+      selectInput(inputId = "dc_fromto", label = "Convert From:", choices = c(dc_chosenindex$rownames))
+      } else { selectInput(inputId = "dc_fromto", label = "Convert To:", choices = c(dc_chosenindex$rownames))
       }
   })
   
-  # generates user input table layout
-  values_input = reactiveValues()
-  dc_data = reactiveValues()
+  # generates the correct periods to display in table ('if' statement prevents app crashing before UI loads)
+  startrow = reactiveValues()
+  endrow = reactiveValues()
   
   observe({
     
-    if (is.null(values_input[["dc_df_input"]])) {
-      dc_data$dc_df_input = data.frame(Period = dc_chosenindex$rownames,
-                                       
-                               "Real" = 0,
-                               "Nominal" = 0
-                               )
-    } else {
-      dc_data$dc_df_input = values_input[["dc_df_input"]]
-    }
+    if(!is.null(input$dc_sliderperiod[1]) & !is.null(input$dc_sliderperiod[2])) {
+      
+      startrow$dc = which(dc_chosenindex$rownames == input$dc_sliderperiod[1])
+      endrow$dc = which(dc_chosenindex$rownames == input$dc_sliderperiod[2])
+      
+      print(startrow$dc)
+      print(endrow$dc)
+      
+      dc_chosenindex$inputperiods = dc_chosenindex$rownames[startrow$dc:endrow$dc]
+      
+    } else { dc_chosenindex$inputperiods = dc_chosenindex$rownames }
     
+  })
+  
+  # creates variables necessary for input table
+  values_input = reactiveValues()
+  dc_data = reactiveValues()
+  
+  # generates the input table
+  observe({
+    
+    if (is.null(values_input[["dc_data$dc_df_input"]])) {
+      dc_data$dc_df_input = data.frame(
+                                Period = dc_chosenindex$inputperiods,
+                                "Input" = 0
+                                )
+    } else {
+      dc_data$dc_df_input = values_input[["dc_data$dc_df_input"]]
+    }
     
   })
   
@@ -184,9 +204,8 @@ shinyServer(function(input, output) {
     dc_df_input = dc_data$dc_df_input
     if (!is.null(dc_df_input)){
       rhandsontable(dc_df_input, useTypes = TRUE, stretchH = "all") %>%
-      hot_col("Period", width = 25) %>%
-      hot_col("Real", width = 50) %>%
-      hot_col("Nominal", width = 50)}
+      hot_col("Period", readOnly = TRUE)
+      }
     })
   
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DEFLATOR CALCULATOR: INPUT | END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -226,11 +245,9 @@ dc_df_output = hot_to_r(input$hot)
   #produces output table
   output$cold <- renderRHandsontable({
     dc_df_output = dc_data_output()
-    if (!is.null(dc_df_output))
-      rhandsontable(dc_df_output, stretchH = "all", readOnly = TRUE) %>%
-      hot_col("Period", width = 25) %>%
-      hot_col("Real", width = 50) %>%
-      hot_col("Nominal", width = 50)
+    if (!is.null(dc_df_output)) {
+      rhandsontable(dc_df_output, stretchH = "all", readOnly = TRUE)
+  }
   })
         
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DEFLATOR CALCULATOR: OUTPUT | END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
