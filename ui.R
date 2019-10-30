@@ -13,7 +13,6 @@ library(shinyWidgets)
 source("./idx.R")
 
 # UI for Indexation app
-
 ui = navbarPage("Indexation Tool",
                 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ INDICES TABLE | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -59,7 +58,7 @@ tabPanel("Deflator Calculator",
      selectInput(inputId = "dc_realnom", label = "Conversion: Real/Nominal", choices = c("Real to Nominal", "Nominal to Real")),
      uiOutput("dc_fromto"),
      selectInput(inputId = "dc_period", label = "Period Reference", choices = c("Quarterly", "Calendar Year", "Financial Year")),
-     uiOutput("dc_slideryears")
+     uiOutput("dc_sliderperiod")
    ),
                          
   mainPanel(
