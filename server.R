@@ -128,8 +128,7 @@ shinyServer(function(session, input, output) {
   dc_chosenindex = reactiveValues(rownames = rownames(index_obr_qtr), data = index_obr_qtr)
   
   # ensures correct dataframe is chosen for future use, based on user input
-  #observeEvent(input$dc_period, {
-    reactive({
+  observeEvent(input$dc_period, {
       if (input$dc_period == "Quarterly") {
       dc_chosenindex$data = index_obr_qtr
       dc_chosenindex$rownames = rownames(index_obr_qtr)
@@ -143,19 +142,15 @@ shinyServer(function(session, input, output) {
       dc_chosenindex$data = index_obr_all
       dc_chosenindex$rownames = rownames(index_obr_all)
     }
+      
   })
 
   # generates correct slider options in defcalc user interface, based on user input
-  slideroptions <- reactive({
-    dc_chosenindex$rownames
-  })
-    
     observeEvent(input$dc_period, {
     updateSliderTextInput(session = session, inputId = "dc_slider",
-                          choices = slideroptions(), selected = dc_chosenindex$rownames[c(1, nrow(dc_chosenindex$data))])
+                           choices = dc_chosenindex$rownames, selected = dc_chosenindex$rownames[c(1, nrow(dc_chosenindex$data))])
     }, ignoreInit = TRUE)
     
-
   # generates dropdown options for convert from/to, based on user input
   output$dc_fromto <- renderUI({
     if (input$dc_realnom == "Real to Nominal") {
@@ -169,17 +164,12 @@ shinyServer(function(session, input, output) {
   endrow = reactiveValues()
   
   
-  observe({
+  observeEvent(input$dc_slider, {
     
     if(!is.null(input$dc_slider[1]) & !is.null(input$dc_slider[2])) {
       
       startrow$dc = which(dc_chosenindex$rownames == input$dc_slider[1])
       endrow$dc = which(dc_chosenindex$rownames == input$dc_slider[2])
-      
-      #print(dc_chosenindex$rownames)
-      #print(input$dc_slider[1])
-      #print(startrow$dc)
-      #print(endrow$dc)
       
       dc_chosenindex$inputperiods = dc_chosenindex$rownames[startrow$dc:endrow$dc]
       
