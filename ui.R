@@ -30,7 +30,7 @@ ui =
   tabPanel("Guidance",
          mainPanel(
            h1("Version", style = "font-weight: bold; font-family: Arial, Helvetica, sans-serif; border-bottom:1px solid black"),
-           p("This is using", temp_obr_xlsx, style = "margin-left: 1em"),
+           #p("This is using", temp_obr_xlsx, style = "margin-left: 1em"),
            htmlTemplate("www/HTMLTEST.html"), width = 12
          )
   ),
@@ -60,7 +60,8 @@ tabPanel("Deflator Calculator",
      selectInput(inputId = "dc_realnom", label = "Conversion: Real/Nominal", choices = c("Real to Nominal", "Nominal to Real")),
      uiOutput("dc_fromto"),
      selectInput(inputId = "dc_period", label = "Period Reference", choices = c("Quarterly", "Calendar Year", "Financial Year")),
-     uiOutput("dc_sliderperiod")
+     sliderTextInput(inputId = "dc_slider", label = "Selected Time Period Range",
+                     choices = rownames(index_obr_qtr), selected = rownames(index_obr_qtr)[c(1, nrow(index_obr_qtr))])
    ),
                          
   mainPanel(

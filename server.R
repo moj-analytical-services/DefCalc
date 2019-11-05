@@ -9,10 +9,9 @@
 
 library(shiny)
 library(shinyWidgets)
-library(dqshiny)
 
 # Server logic required to create output
-shinyServer(function(input, output) {
+shinyServer(function(session, input, output) {
   
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ INDICES TABLE | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   
@@ -129,8 +128,9 @@ shinyServer(function(input, output) {
   dc_chosenindex = reactiveValues(rownames = rownames(index_obr_qtr), data = index_obr_qtr)
   
   # ensures correct dataframe is chosen for future use, based on user input
-  observeEvent(input$dc_period, {
-    if (input$dc_period == "Quarterly") {
+  #observeEvent(input$dc_period, {
+    reactive({
+      if (input$dc_period == "Quarterly") {
       dc_chosenindex$data = index_obr_qtr
       dc_chosenindex$rownames = rownames(index_obr_qtr)
     } else if (input$dc_period == "Calendar Year") {
@@ -144,15 +144,18 @@ shinyServer(function(input, output) {
       dc_chosenindex$rownames = rownames(index_obr_all)
     }
   })
-  
+
   # generates correct slider options in defcalc user interface, based on user input
-  output$dc_sliderperiod <- renderUI({
-    sliderTextInput(inputId = "dc_sliderperiod", label = "Input Time Period",
-                    choices = dc_chosenindex$rownames,
-                    selected = dc_chosenindex$rownames[c(1, nrow(dc_chosenindex$data))]
-    )
+  slideroptions <- reactive({
+    dc_chosenindex$rownames
   })
-  
+    
+    observeEvent(input$dc_period, {
+    updateSliderTextInput(session = session, inputId = "dc_slider",
+                          choices = slideroptions(), selected = dc_chosenindex$rownames[c(1, nrow(dc_chosenindex$data))])
+    }, ignoreInit = TRUE)
+    
+
   # generates dropdown options for convert from/to, based on user input
   output$dc_fromto <- renderUI({
     if (input$dc_realnom == "Real to Nominal") {
@@ -165,15 +168,18 @@ shinyServer(function(input, output) {
   startrow = reactiveValues()
   endrow = reactiveValues()
   
+  
   observe({
     
-    if(!is.null(input$dc_sliderperiod[1]) & !is.null(input$dc_sliderperiod[2])) {
+    if(!is.null(input$dc_slider[1]) & !is.null(input$dc_slider[2])) {
       
-      startrow$dc = which(dc_chosenindex$rownames == input$dc_sliderperiod[1])
-      endrow$dc = which(dc_chosenindex$rownames == input$dc_sliderperiod[2])
+      startrow$dc = which(dc_chosenindex$rownames == input$dc_slider[1])
+      endrow$dc = which(dc_chosenindex$rownames == input$dc_slider[2])
       
-      print(startrow$dc)
-      print(endrow$dc)
+      #print(dc_chosenindex$rownames)
+      #print(input$dc_slider[1])
+      #print(startrow$dc)
+      #print(endrow$dc)
       
       dc_chosenindex$inputperiods = dc_chosenindex$rownames[startrow$dc:endrow$dc]
       
@@ -185,26 +191,28 @@ shinyServer(function(input, output) {
   values_input = reactiveValues()
   dc_data = reactiveValues()
   
-  # generates the input table
+  # generates the basic input table
   observe({
     
-    if (is.null(values_input[["dc_data$dc_df_input"]])) {
-      dc_data$dc_df_input = data.frame(
+    if (is.null(values_input[["dc_data$df_input_default"]])) {
+      dc_data$df_input_default = data.frame(
                                 Period = dc_chosenindex$inputperiods,
                                 "Input" = 0
                                 )
     } else {
-      dc_data$dc_df_input = values_input[["dc_data$dc_df_input"]]
+      dc_data$df_input_default = values_input[["dc_data$df_input_default"]]
     }
     
+    dc_data$df_input_default
+    
+    dc_data$df_input_transposed <- as.data.frame(t(dc_data$df_input_default))
   })
   
   #produces input table
   output$hot <- renderRHandsontable({
-    dc_df_input = dc_data$dc_df_input
+    dc_df_input = dc_data$df_input_transposed
     if (!is.null(dc_df_input)){
-      rhandsontable(dc_df_input, useTypes = TRUE, stretchH = "all") %>%
-      hot_col("Period", readOnly = TRUE)
+      rhandsontable(dc_df_input[c("Input"),], useTypes = TRUE, stretchH = "all", colHeaders = unlist(list(dc_chosenindex$inputperiods)))
       }
     })
   
@@ -246,7 +254,7 @@ dc_df_output = hot_to_r(input$hot)
   output$cold <- renderRHandsontable({
     dc_df_output = dc_data_output()
     if (!is.null(dc_df_output)) {
-      rhandsontable(dc_df_output, stretchH = "all", readOnly = TRUE)
+      rhandsontable(dc_df_output, stretchH = "all", colHeaders = unlist(list(dc_chosenindex$inputperiods)), readOnly = TRUE)
   }
   })
         
