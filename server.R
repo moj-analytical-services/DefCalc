@@ -205,7 +205,7 @@ shinyServer(function(session, input, output) {
                 input$dc_slider}, {
 
     if (is.null(values_input[["dc_data$df_input_default"]])) {
-      dc_data$df_input_default = as.data.frame(matrix(nrow = input$dc_inputrows, ncol = length(dc_chosenindex$inputperiods)))
+      dc_data$df_input_default = as.data.frame(matrix(0, nrow = input$dc_inputrows, ncol = length(dc_chosenindex$inputperiods)))
         
     } else {
       dc_data$df_input_default = values_input[["dc_data$df_input_default"]]
@@ -220,7 +220,7 @@ shinyServer(function(session, input, output) {
     dc_df_input = dc_data$df_input_default
     if (!is.null(dc_df_input)){
       rhandsontable(dc_df_input, 
-                    useTypes = FALSE, stretchH = "all", colHeaders = unlist(list(dc_chosenindex$inputperiods)))
+                    useTypes = TRUE, stretchH = "all", colHeaders = unlist(list(dc_chosenindex$inputperiods)))
       }
     })
   
@@ -263,7 +263,7 @@ dc_df_output = hot_to_r(input$hot)
     dc_df_output = dc_data_output()
     if (!is.null(dc_df_output)) {
       rhandsontable(dc_df_output, 
-                    useTypes = FALSE, stretchH = "all", colHeaders = unlist(list(dc_chosenindex$inputperiods)), readOnly = TRUE)
+                    useTypes = TRUE, stretchH = "all", colHeaders = unlist(list(dc_chosenindex$inputperiods)), readOnly = TRUE)
   }
   })
         
