@@ -53,3 +53,5 @@ curr_year <- as.numeric(
 fcst_years <- as.character(
                 c(curr_year, curr_year+1, curr_year+2, curr_year+3, curr_year+4, curr_year+5)
                           )
+#remove imported excel file
+file.remove("obr_raw.xlsx")
