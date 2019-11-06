@@ -118,6 +118,26 @@ shinyServer(function(session, input, output) {
     }
   })
   
+  # download selected data
+    output$i_download <- downloadHandler(
+      filename = function() {
+        paste("DASD Indexation Tool - Indices - SELECTED ", Sys.Date(), '.csv', sep = '')
+      },
+      content = function(con) {
+        write.csv(i_chosenindex$mutate[, 1:3], con)
+      }
+    )
+    
+  # download full raw data
+  output$i_downloadall <- downloadHandler(
+    filename = function() {
+      paste("DASD Indexation Tool - Indices - RAW ", Sys.Date(), '.csv', sep = '')
+    },
+    content = function(con) {
+      write.csv(index_obr_raw, con)
+    }
+  )
+  
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ INDICES TABLE | END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DEFLATOR CALCULATOR: INPUT | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
