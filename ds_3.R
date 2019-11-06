@@ -122,3 +122,5 @@ write_df_to_csv_in_s3(obr_xlsx_fy, "alpha-sandbox/obr_fy.csv", overwrite = TRUE)
 #deletes obr.xlsx from directory
 file.remove(temp_obr_xlsx)
 file.remove("obr.xlsx")
+file.remove("obr_raw.xlsx")
+file.remove("obr_unformatted.xlsx")
