@@ -54,7 +54,8 @@ obrsheet <- obr_contents$contents[ginf]
 obrsheet <- gsub(infpat,'\\1',obrsheet) 
 
 #Read the sheet defined by 'obrsheet' in the publication.
-obr_xlsx = read_excel(temp_obr_xlsx,sheet = obrsheet) #1.7 is current tab name for Inflation tab
+obr_xlsx = read_excel(temp_obr_xlsx,sheet = obrsheet)
+obr_xlsx_unformatted = read_excel(temp_obr_xlsx,sheet = obrsheet)
 
 #Clean data to prepare for app
 #removes empty columns based on if they're entirely 'NA'
@@ -98,15 +99,21 @@ writeData(obr, sheet = "qtr", obr_xlsx_qtr, colNames = TRUE, rowNames = TRUE)
 writeData(obr, sheet = "pa", obr_xlsx_pa, colNames = TRUE, rowNames = TRUE)
 writeData(obr, sheet = "fy", obr_xlsx_fy, colNames = TRUE, rowNames = TRUE)
 
+#Creates raw data workbook as .xlsx
+obr_unformatted <- createWorkbook()
+addWorksheet(obr_unformatted, sheet = "Raw")
+writeData(obr_unformatted, sheet = "Raw", obr_xlsx_unformatted, colNames = FALSE, rowNames = FALSE)
 
 #Save dataframes as both .xlsx and .csv files (only .csv is used in app)
 saveWorkbook(obr, temp_obr_xlsx, overwrite = TRUE)
 write_file_to_s3("obr.xlsx", paste0("alpha-sandbox/",temp_obr_xlsx), overwrite = TRUE)
 
-
 #Save dataframes as both .xlsx and .csv files (only .csv is used in app)
 saveWorkbook(obr, "obr.xlsx", overwrite = TRUE)
 write_file_to_s3("obr.xlsx", "alpha-sandbox/obr.xlsx", overwrite = TRUE)
+saveWorkbook(obr_unformatted, "obr_unformatted.xlsx", overwrite = TRUE)
+write_file_to_s3("obr_unformatted.xlsx", "alpha-sandbox/obr_raw.xlsx", overwrite = TRUE)
+
 write_df_to_csv_in_s3(obr_xlsx, "alpha-sandbox/obr_all.csv", overwrite = TRUE)
 write_df_to_csv_in_s3(obr_xlsx_qtr, "alpha-sandbox/obr_qtr.csv", overwrite = TRUE)
 write_df_to_csv_in_s3(obr_xlsx_pa, "alpha-sandbox/obr_pa.csv", overwrite = TRUE)

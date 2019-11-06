@@ -41,7 +41,9 @@ ui =
        # dropdown menus: indices = different indices available; period = frequency of data; baseyear = chosen base year
        selectInput(inputId = "i_indices", label = "Index", choices = colnames(index_options)),
        selectInput(inputId = "i_period", label = "Period Reference", choices = c("Quarterly", "Calendar Year", "Financial Year")),
-       uiOutput("i_base")
+       uiOutput("i_base"),
+       downloadButton("i_download", label = "Download Displayed Data"),
+       downloadButton("i_downloadall", label = "Download Full Raw Data")
      ),
    mainPanel(dataTableOutput("i_indextable")
    )

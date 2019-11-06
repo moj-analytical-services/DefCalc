@@ -5,12 +5,16 @@ library(s3tools) #importing data from AWS
 library(DT) #required to produce output table
 library(rhandsontable) #required to add tabs to UI
 
-#Download cleaned OBR data .xlsx (not currently in use)
+#Download cleaned OBR data .xlsx (mostly not currently in use)
 #download_file_from_s3("alpha-sandbox/obr.xlsx", "obr.xlsx", overwrite = TRUE)
 #index_obr_all <- readWorkbook("obr.xlsx", sheet = "all", colNames = TRUE, rowNames = TRUE)
 #index_obr_qtr <- readWorkbook("obr.xlsx", sheet = "qtr", colNames = TRUE, rowNames = TRUE)
 #index_obr_pa <- readWorkbook("obr.xlsx", sheet = "pa", colNames = TRUE, rowNames = TRUE)
 #index_obr_fy <- readWorkbook("obr.xlsx", sheet = "fy", colNames = TRUE, rowNames = TRUE)
+download_file_from_s3("alpha-sandbox/obr_raw.xlsx", "obr_raw.xlsx", overwrite = TRUE)
+index_obr_raw <- readWorkbook("obr_raw.xlsx", sheet = "Raw", colNames = TRUE)
+index_obr_raw <- index_obr_raw %>% replace(., is.na(.), "")
+names(index_obr_raw)[2:ncol(index_obr_raw)] <- ""
 
 #Download cleaned OBR data .csv, and re-adds rownames
 index_obr_all <- s3_path_to_full_df("alpha-sandbox/obr_all.csv")
