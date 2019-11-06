@@ -59,13 +59,18 @@ tabPanel("Deflator Calculator",
      selectInput(inputId = "dc_indices", label = "Index", choices = colnames(index_options)),
      selectInput(inputId = "dc_realnom", label = "Conversion: Real/Nominal", choices = c("Real to Nominal", "Nominal to Real")),
      uiOutput("dc_fromto"),
-     selectInput(inputId = "dc_period", label = "Period Reference", choices = c("Quarterly", "Calendar Year", "Financial Year")),
-     sliderTextInput(inputId = "dc_slider", label = "Selected Time Period Range",
-                     choices = rownames(index_obr_qtr), selected = rownames(index_obr_qtr)[c(1, nrow(index_obr_qtr))])
+     conditionalPanel(
+       condition = "input.dc_tabs == 'Input'",
+        selectInput(inputId = "dc_period", label = "Period Reference", choices = c("Quarterly", "Calendar Year", "Financial Year")),
+        sliderTextInput(inputId = "dc_slider", label = "Selected Time Period Range",
+                        choices = rownames(index_obr_qtr), selected = rownames(index_obr_qtr)[c(1, nrow(index_obr_qtr))]),
+        numericInput(inputId = "dc_inputrows", label = "Number of Required Rows", value = 1, min = 1, step = 1)
+      )
    ),
                          
   mainPanel(
-     tabsetPanel(type = "tabs",
+     tabsetPanel(id = "dc_tabs", type = "tabs",
+                 
       # input tab for user data
       tabPanel("Input",
           rHandsontableOutput("hot")

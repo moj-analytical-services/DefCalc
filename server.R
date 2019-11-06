@@ -163,7 +163,6 @@ shinyServer(function(session, input, output) {
   startrow = reactiveValues()
   endrow = reactiveValues()
   
-  
   observeEvent(input$dc_slider, {
     
     if(!is.null(input$dc_slider[1]) & !is.null(input$dc_slider[2])) {
@@ -181,28 +180,27 @@ shinyServer(function(session, input, output) {
   values_input = reactiveValues()
   dc_data = reactiveValues()
   
-  # generates the basic input table
-  observe({
-    
+  # generates the basic input table...
+  observeEvent({input$dc_inputrows
+                input$dc_slider}, {
+
     if (is.null(values_input[["dc_data$df_input_default"]])) {
-      dc_data$df_input_default = data.frame(
-                                Period = dc_chosenindex$inputperiods,
-                                "Input" = 0
-                                )
+      dc_data$df_input_default = as.data.frame(matrix(nrow = input$dc_inputrows, ncol = length(dc_chosenindex$inputperiods)))
+        
     } else {
       dc_data$df_input_default = values_input[["dc_data$df_input_default"]]
     }
     
     dc_data$df_input_default
     
-    dc_data$df_input_transposed <- as.data.frame(t(dc_data$df_input_default))
   })
   
   #produces input table
   output$hot <- renderRHandsontable({
-    dc_df_input = dc_data$df_input_transposed
+    dc_df_input = dc_data$df_input_default
     if (!is.null(dc_df_input)){
-      rhandsontable(dc_df_input[c("Input"),], useTypes = TRUE, stretchH = "all", colHeaders = unlist(list(dc_chosenindex$inputperiods)))
+      rhandsontable(dc_df_input, 
+                    useTypes = FALSE, stretchH = "all", colHeaders = unlist(list(dc_chosenindex$inputperiods)))
       }
     })
   
@@ -244,7 +242,8 @@ dc_df_output = hot_to_r(input$hot)
   output$cold <- renderRHandsontable({
     dc_df_output = dc_data_output()
     if (!is.null(dc_df_output)) {
-      rhandsontable(dc_df_output, stretchH = "all", colHeaders = unlist(list(dc_chosenindex$inputperiods)), readOnly = TRUE)
+      rhandsontable(dc_df_output, 
+                    useTypes = FALSE, stretchH = "all", colHeaders = unlist(list(dc_chosenindex$inputperiods)), readOnly = TRUE)
   }
   })
         
