@@ -17,7 +17,7 @@ source("./idx.R")
 ui = 
   fluidPage(
 
-  div(img(src = "MoJ_logo.png", width = "8%", height = "8%"), div("DASD Indexation Tool", style = "text-align: center; position: absolute; top: 3%; left: 40%; font-weight: bold; font-family: Arial, Helvetica, sans-serif"), style= {"padding: 8px ; color: black ; font-size: 150%"}),
+    htmlTemplate("www/Top_B.html"),
   
   navbarPage("",
                  
@@ -66,7 +66,7 @@ tabPanel("Deflator Calculator",
         selectInput(inputId = "dc_period", label = "Period Reference", choices = c("Quarterly", "Calendar Year", "Financial Year")),
         sliderTextInput(inputId = "dc_slider", label = "Selected Time Period Range",
                         choices = rownames(index_obr_qtr), selected = rownames(index_obr_qtr)[c(1, nrow(index_obr_qtr))]),
-        numericInput(inputId = "dc_inputrows", label = "Number of Required Rows", value = 1, min = 1, step = 1)
+        numericInput(inputId = "dc_inputrows", label = "Number of Required Rows", value = 20, min = 1, step = 1)
       )
    ),
                          
