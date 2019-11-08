@@ -226,35 +226,58 @@ shinyServer(function(session, input, output) {
   
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DEFLATOR CALCULATOR: INPUT | END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DEFLATOR CALCULATOR: DEFLATOR SELECT | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  
+  dc_chosenindex$final = reactiveValues()
+  dc_chosenindex$mutate = reactiveValues()
+  dc_base_value = reactiveValues()
+
+    observeEvent({input$dc_fromto
+                  input$dc_indices
+                  input$dc_realnom
+                  input$dc_period
+      }, {
+      if(!is.null(dc_chosenindex$rownames)){
+   
+      #Finding the relevant base index and
+   
+      dc_base_value <- dc_chosenindex$data[input$dc_fromto, which(colnames(dc_chosenindex$data) == input$dc_indices) + 8]
+   
+      dc_chosenindex$mutate <- dc_chosenindex$data[, which(colnames(dc_chosenindex$data) == input$dc_indices) + 8]
+   
+      ifelse(input$dc_realnom == "Real to Nominal",
+                                     
+                                     (dc_chosenindex$final <- dc_chosenindex$mutate / dc_base_value), 
+
+                                     (dc_chosenindex$final <- dc_base_value / dc_chosenindex$mutate))
+      
+      print(input$dc_realnom == "Real to Nominal")
+      print(dc_chosenindex$mutate / dc_base_value)
+      print(dc_base_value)
+      print(dc_chosenindex$final)
+      
+      dc_chosenindex$final = t(dc_chosenindex$final)
+   
+    }})
+  
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DEFLATOR CALCULATOR: DEFLATOR SELECT | END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+  
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DEFLATOR CALCULATOR: OUTPUT | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   
-# # all variables pre-fixed with 'dc_' to prevent duplication with other outputs
+#all variables pre-fixed with 'dc_' to prevent duplication with other outputs
 # 
 reactive({
 dc_df_output = hot_to_r(input$hot)
 })
 
- # converts real to nominal, and vice versa
- #  observe({
- #    if (input$dc_realnom == "Real to Nominal") {
- #      #Nominal = Real * (Deflator / 100) aka Nominal = User Input Data * (Deflator / 100)
- #      
- #
- #     
- #  } else {
- #    #Real = Nominal / (Index / 100) aka Real = User Input Data * (Index / 100)
- #    
- #
- #  }
- #   
- # })
-   
-   
   #generates user output table layout
   values_output = reactiveValues()
  
   dc_data_output = reactive({
-      dc_df_output = hot_to_r(input$hot)
+      
+      dc_df_out = hot_to_r(input$hot)
+      
+      dc_df_output = as.data.frame(mapply('*',dc_df_out, dc_chosenindex$final))
  })
    
    
