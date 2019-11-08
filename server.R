@@ -236,6 +236,7 @@ shinyServer(function(session, input, output) {
                   input$dc_indices
                   input$dc_realnom
                   input$dc_period
+                  input$dc_slider
       }, {
       if(!is.null(dc_chosenindex$rownames)){
    
@@ -243,7 +244,7 @@ shinyServer(function(session, input, output) {
    
       dc_base_value <- dc_chosenindex$data[input$dc_fromto, which(colnames(dc_chosenindex$data) == input$dc_indices) + 8]
    
-      dc_chosenindex$mutate <- dc_chosenindex$data[, which(colnames(dc_chosenindex$data) == input$dc_indices) + 8]
+      dc_chosenindex$mutate <- dc_chosenindex$data[startrow$dc:endrow$dc, which(colnames(dc_chosenindex$data) == input$dc_indices) + 8]
    
       ifelse(input$dc_realnom == "Real to Nominal",
                                      
@@ -251,11 +252,11 @@ shinyServer(function(session, input, output) {
 
                                      (dc_chosenindex$final <- dc_base_value / dc_chosenindex$mutate))
       
-      print(input$dc_realnom == "Real to Nominal")
-      print(dc_chosenindex$mutate / dc_base_value)
-      print(dc_base_value)
-      print(dc_chosenindex$final)
-      
+     # print(input$dc_realnom == "Real to Nominal")
+      #print(dc_chosenindex$mutate / dc_base_value)
+      #print(dc_base_value)
+      #print(dc_chosenindex$final)
+      print(dc_chosenindex$inputperiods)
       dc_chosenindex$final = t(dc_chosenindex$final)
    
     }})
