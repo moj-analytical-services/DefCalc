@@ -257,7 +257,7 @@ shinyServer(function(session, input, output) {
               (dc_chosenindex$final <- dc_chosenindex$mutate / dc_base_value), 
 
               (dc_chosenindex$final <- dc_base_value / dc_chosenindex$mutate))
-      
+
       dc_chosenindex$final = t(dc_chosenindex$final)
       
       dc_chosenindex$final
