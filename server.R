@@ -193,10 +193,7 @@ shinyServer(function(session, input, output) {
       
       dc_chosenindex$inputperiods = dc_chosenindex$rownames[startrow$dc:endrow$dc]
       
-    } else { dc_chosenindex$inputperiods = dc_chosenindex$rownames }
-                  
-    print(startrow$dc)
-    print(endrow$dc)
+    } else { dc_chosenindex$inputperiods = dc_chosenindex$rownames }                 
     
   })
   
