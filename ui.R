@@ -66,7 +66,7 @@ tabPanel("Deflator Calculator",
         selectInput(inputId = "dc_period", label = "Period Reference", choices = c("Quarterly", "Calendar Year", "Financial Year")),
         sliderTextInput(inputId = "dc_slider", label = "Selected Time Period Range",
                         choices = rownames(index_obr_qtr), selected = rownames(index_obr_qtr)[c(1, nrow(index_obr_qtr))]),
-        numericInput(inputId = "dc_inputrows", label = "Number of Required Rows", value = 20, min = 1, step = 1)
+        numericInput(inputId = "dc_inputrows", label = "Number of Required Rows", value = 10, min = 1, step = 1)
       )
    ),
                          
