@@ -286,6 +286,34 @@ shinyServer(function(session, input, output) {
                     useTypes = TRUE, stretchH = "all", colHeaders = unlist(list(dc_chosenindex$inputperiods)), readOnly = TRUE)
   }
   })
+  
+  # produce dataframe that combines input, output and deflator index
+  dc_download_input = reactiveValues()
+  dc_download_output = reactiveValues()
+  dc_download_index = reactiveValues()
+  
+  dc_download_df = reactive({
+    
+    dc_download_input = hot_to_r(input$hot)
+    dc_download_output = hot_to_r(input$cold)
+    dc_download_index = dc_chosenindex$final[,startrow$dc:endrow$dc]
+  
+    dc_download_df = rbind(dc_download_input, dc_download_output, dc_download_index)
+    colnames(dc_download_df) <- dc_chosenindex$inputperiods
+      
+    dc_download_df
+    
+  })
+  
+  # download full data (inputs, outputs, and original deflated index)
+  output$dc_download <- downloadHandler(
+    filename = function() {
+      paste("DASD Indexation Tool - Deflator ", Sys.Date(), '.csv', sep = '')
+    },
+    content = function(con) {
+      write.csv(dc_download_df(), con)
+    }
+  )
         
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DEFLATOR CALCULATOR: OUTPUT | END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   
