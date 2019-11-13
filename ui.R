@@ -67,7 +67,11 @@ tabPanel("Deflator Calculator",
         sliderTextInput(inputId = "dc_slider", label = "Selected Time Period Range",
                         choices = rownames(index_obr_qtr), selected = rownames(index_obr_qtr)[c(1, nrow(index_obr_qtr))]),
         numericInput(inputId = "dc_inputrows", label = "Number of Required Rows", value = 10, min = 1, step = 1)
-      )
+      ),
+     conditionalPanel(
+       condition = "input.dc_tabs == 'Output'",
+        downloadButton("dc_download", label = "Download Results")
+     )
    ),
                          
   mainPanel(
