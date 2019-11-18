@@ -30,7 +30,7 @@ ui =
   tabPanel("Guidance",
          mainPanel(
            h1("Version", style = "font-weight: bold; font-family: Arial, Helvetica, sans-serif; border-bottom:1px solid black"),
-           #p("This is using", temp_obr_xlsx, style = "margin-left: 1em"),
+           p("This version of the DASD Indexation Tool is using data published by the Office for Budget Responsibility (OBR) in the following publication:",tags$a(updatefilename, href= updateweblink, target="_blank"),".", style = "margin-left: 1em"),
            htmlTemplate("www/HTMLTEST.html"), width = 12
          )
   ),
@@ -57,6 +57,7 @@ ui =
                 
 tabPanel("Deflator Calculator",
   sidebarPanel(
+     p("Please select the correct options below before copying data into the 'Input Table' as changing options after may reset your data.", style = "font-weight: bold; font-family: Arial, Helvetica, sans-serif; color: red"),
      # dropdown menus: indices = different indices available; period = frequency of data; realnom = real or nominal adjustment; slideryears = years covered in input data
      selectInput(inputId = "dc_indices", label = "Index", choices = colnames(index_options)),
      selectInput(inputId = "dc_realnom", label = "Conversion: Real/Nominal", choices = c("Real to Nominal", "Nominal to Real")),

@@ -25,6 +25,12 @@ index_obr_pa <- s3_path_to_full_df("alpha-sandbox/obr_pa.csv")
 index_obr_pa <- data.frame(index_obr_pa, row.names = 1)
 index_obr_fy <- s3_path_to_full_df("alpha-sandbox/obr_fy.csv")
 index_obr_fy <- data.frame(index_obr_fy, row.names = 1)
+latest_url_csv <- s3_path_to_full_df("alpha-sandbox/latest_url.csv")
+latest_url_csv <- data.frame(latest_url_csv, row.names = 1)
+
+#tidy up the filenames in the latest_url_csv df to remove underscores and file extension.
+latest_url_csv$filename <- gsub("_"," ",latest_url_csv$filename)
+latest_url_csv$filename <- gsub(".xlsx","",latest_url_csv$filename)
 
 #selects index drop down options needed for UI (i.e. removes duplicates)
 index_options <- index_obr_all %>% select(starts_with("yoy_"))
