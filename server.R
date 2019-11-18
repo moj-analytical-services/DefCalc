@@ -13,6 +13,14 @@ library(shinyWidgets)
 # Server logic required to create output
 shinyServer(function(session, input, output) {
   
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ OBR VERSION USED  | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  
+  
+  updatefilename <- ifelse(length(latest_url_csv$filename[latest_url_csv$updatereq == 1]) == 0,latest_url_csv$filename[latest_url_csv$s3 == 1 & latest_url_csv$latest == 1],latest_url_csv$filename[latest_url_csv$updatereq == 1])
+
+  updateweblink <- ifelse(length(latest_url_csv$weblink[latest_url_csv$updatereq == 1]) == 0,latest_url_csv$weblink[latest_url_csv$s3 == 1 & latest_url_csv$latest == 1],latest_url_csv$weblink[latest_url_csv$updatereq == 1])
+  
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ OBR VERSION USED  | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  
+    
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ INDICES TABLE | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   
 # all variables pre-fixed with 'i_' to prevent duplication with other outputs
@@ -221,8 +229,11 @@ shinyServer(function(session, input, output) {
   output$hot <- renderRHandsontable({
     dc_df_input = dc_data$df_input_default
     if (!is.null(dc_df_input)){
-      rhandsontable(dc_df_input, 
-                    useTypes = TRUE, stretchH = "all", colHeaders = unlist(list(dc_chosenindex$inputperiods)))
+      rhandsontable(dc_df_input, col_highlight = 2,
+                    useTypes = TRUE, stretchH = "all", colHeaders = unlist(list(dc_chosenindex$inputperiods))) %>% hot_cols(renderer = "function(instance, td, row, col, prop, value, cellProperties) {
+    Handsontable.renderers.NumericRenderer.apply(this, arguments); if(value == 0 ){
+    td.style.color = 'gray'; td.style.background = 'white'} else if (value != 0) {td.style.color = 'black';} 
+  }")
       }
     })
   
@@ -259,6 +270,14 @@ shinyServer(function(session, input, output) {
       
       dc_chosenindex$final
       
+      dc_chosenindex$colnumber <- which(dc_chosenindex$inputperiods == input$dc_fromto)
+      
+      print(input$dc)
+      
+      print(dc_chosenindex$inputperiods)
+      
+      print(dc_chosenindex$colnumber)
+    
     }
                     })
   
@@ -283,22 +302,34 @@ shinyServer(function(session, input, output) {
     dc_df_output = dc_data_output()
     if (!is.null(dc_df_output)) {
       rhandsontable(dc_df_output, 
-                    useTypes = TRUE, stretchH = "all", colHeaders = unlist(list(dc_chosenindex$inputperiods)), readOnly = TRUE)
+                    useTypes = TRUE, stretchH = "all", colHeaders = unlist(list(dc_chosenindex$inputperiods)), readOnly = TRUE) %>% hot_cols(renderer = "function(instance, td, row, col, prop, value, cellProperties) {
+    Handsontable.renderers.NumericRenderer.apply(this, arguments); if(value == 0 ){
+    td.style.color = 'gray'; td.style.background = 'white'} else if (value != 0) {td.style.color = 'black';} 
+  }")
   }
   })
   
   # produce dataframe that combines input, output and deflator index
+  
+  dc_download_date <- paste("This spreadsheet was downloaded using the DASD Indexation Tool on", Sys.Date(), "at", sub("(.*-.*-.*) ","",Sys.time()), sep = " ")
+
   dc_download_input = reactiveValues()
   dc_download_output = reactiveValues()
   dc_download_index = reactiveValues()
   
   dc_download_df = reactive({
     
+    
+    dc_download_vector <- 0*dc_chosenindex$final[,startrow$dc:(endrow$dc-1)]
+    print(dc_download_vector)
+    dc_download_combine <- t(matrix(c(dc_download_title,dc_download_date,sub(0,"",dc_download_vector))))
+    
     dc_download_input = hot_to_r(input$hot)
     dc_download_output = hot_to_r(input$cold)
     dc_download_index = dc_chosenindex$final[,startrow$dc:endrow$dc]
   
-    dc_download_df = rbind(dc_download_input, dc_download_output, dc_download_index)
+    dc_download_df = rbind(dc_download_input, dc_download_output, dc_download_index,dc_download_combine)
+    
     colnames(dc_download_df) <- dc_chosenindex$inputperiods
       
     dc_download_df

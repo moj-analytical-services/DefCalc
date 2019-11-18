@@ -26,16 +26,29 @@ latest_url$filename <- paste('Economy_supplementary_tables',paste(latest_url$Dat
 
 latest_url$filename <- gsub("-","_",latest_url$filename)
 
-#Test if files are in S3 and if they're not then indicate the URL that needs to be downloaded.  
+#Test if files are in S3 and if they're not then indicate the URL that needs to be downloaded.
+
 s3files <- s3tools::list_files_in_buckets('alpha-sandbox')
+
 mypattern = 'Economy_supplementary_tables_(.*).*'
+
 gg = grep(mypattern,s3files$filename) #Find the pattern above in the list of s3 files, this tells me the number of the file in that list.  
+
 econ = s3files$filename[gg] #Create a variable called econ, which is the filename of the file that contains the pattern.  
+
 latest_url$s3 <- ifelse((latest_url$filename %in% econ),1,0) #Identify which hyperlink / file in the latest_url dataframe corresponds to the file in s3.   
+
 latest_url$latest <- as.Date(paste0(latest_url$Date,"-01"),format ='%B-%Y-%d') #Create new column that formats the month-year column into a date format (e.g. dd/mm/yyyy).
+
 maxi <- max(latest_url$latest[latest_url$exist == TRUE]) #Find the latest date of those URLs that exist. 
+
 latest_url$latest <- ifelse(latest_url$latest == maxi,1,0) #Confirm which is the latest date in the list. 
-latest_url$updatereq <- ifelse((latest_url$exist == TRUE & latest_url$s3 == 0 & latest_url$latest == 1),1,0) #If the URL exists, there is no file in s3 and the month is the latest then an udpate is required. 
+
+latest_url$updatereq <- ifelse((latest_url$exist == TRUE & latest_url$s3 == 0 & latest_url$latest == 1),1,0) #If the URL exists, there is no file in s3 and the month is the latest then an udpate is required.
+
+latest_url$weblink <- paste('https://obr.uk/efo/economic-fiscal-outlook', latest_url$Date,sep = "-")
+
+#Pick out of the latest_url df the url that needs to be downloaded and the corresponding filename.
 
 updateurl <- ifelse(length(latest_url$urls[latest_url$updatereq == 1]) == 0,latest_url$urls[latest_url$s3 == 1 & latest_url$latest == 1],latest_url$urls[latest_url$updatereq == 1])
 
@@ -118,6 +131,9 @@ write_df_to_csv_in_s3(obr_xlsx, "alpha-sandbox/obr_all.csv", overwrite = TRUE)
 write_df_to_csv_in_s3(obr_xlsx_qtr, "alpha-sandbox/obr_qtr.csv", overwrite = TRUE)
 write_df_to_csv_in_s3(obr_xlsx_pa, "alpha-sandbox/obr_pa.csv", overwrite = TRUE)
 write_df_to_csv_in_s3(obr_xlsx_fy, "alpha-sandbox/obr_fy.csv", overwrite = TRUE)
+
+#Create .csv with just the filename of the latest download in it. 
+write_df_to_csv_in_s3(latest_url, "alpha-sandbox/latest_url.csv", overwrite = TRUE)
 
 #deletes obr.xlsx from directory
 file.remove(temp_obr_xlsx)
