@@ -32,6 +32,10 @@ latest_url_csv <- data.frame(latest_url_csv, row.names = 1)
 latest_url_csv$filename <- gsub("_"," ",latest_url_csv$filename)
 latest_url_csv$filename <- gsub(".xlsx","",latest_url_csv$filename)
 
+#create variables for UI for the latest filename used and the website link. 
+updatefilename <- ifelse(length(latest_url_csv$filename[latest_url_csv$updatereq == 1]) == 0,latest_url_csv$filename[latest_url_csv$s3 == 1 & latest_url_csv$latest == 1],latest_url_csv$filename[latest_url_csv$updatereq == 1])
+updateweblink <- ifelse(length(latest_url_csv$weblink[latest_url_csv$updatereq == 1]) == 0,latest_url_csv$weblink[latest_url_csv$s3 == 1 & latest_url_csv$latest == 1],latest_url_csv$weblink[latest_url_csv$updatereq == 1])
+
 #selects index drop down options needed for UI (i.e. removes duplicates)
 index_options <- index_obr_all %>% select(starts_with("yoy_"))
 colnames(index_options) <- substring(colnames(index_options), 5)

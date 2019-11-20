@@ -13,14 +13,7 @@ library(shinyWidgets)
 # Server logic required to create output
 shinyServer(function(session, input, output) {
   
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ OBR VERSION USED  | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  
-  
-  updatefilename <- ifelse(length(latest_url_csv$filename[latest_url_csv$updatereq == 1]) == 0,latest_url_csv$filename[latest_url_csv$s3 == 1 & latest_url_csv$latest == 1],latest_url_csv$filename[latest_url_csv$updatereq == 1])
 
-  updateweblink <- ifelse(length(latest_url_csv$weblink[latest_url_csv$updatereq == 1]) == 0,latest_url_csv$weblink[latest_url_csv$s3 == 1 & latest_url_csv$latest == 1],latest_url_csv$weblink[latest_url_csv$updatereq == 1])
-  
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ OBR VERSION USED  | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  
-    
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ INDICES TABLE | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   
 # all variables pre-fixed with 'i_' to prevent duplication with other outputs
