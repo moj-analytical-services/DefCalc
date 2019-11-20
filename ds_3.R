@@ -28,7 +28,7 @@ latest_url$filename <- gsub("-","_",latest_url$filename)
 
 #Test if files are in S3 and if they're not then indicate the URL that needs to be downloaded.
 
-s3files <- s3tools::list_files_in_buckets('alpha-sandbox')
+s3files <- s3tools::list_files_in_buckets('alpha-app-defcalc')
 
 mypattern = 'Economy_supplementary_tables_(.*).*'
 
@@ -119,21 +119,21 @@ writeData(obr_unformatted, sheet = "Raw", obr_xlsx_unformatted, colNames = FALSE
 
 #Save dataframes as both .xlsx and .csv files (only .csv is used in app)
 saveWorkbook(obr, temp_obr_xlsx, overwrite = TRUE)
-write_file_to_s3("obr.xlsx", paste0("alpha-sandbox/",temp_obr_xlsx), overwrite = TRUE)
+write_file_to_s3("obr.xlsx", paste0("alpha-app-defcalc/",temp_obr_xlsx), overwrite = TRUE)
 
 #Save dataframes as both .xlsx and .csv files (only .csv is used in app)
 saveWorkbook(obr, "obr.xlsx", overwrite = TRUE)
-write_file_to_s3("obr.xlsx", "alpha-sandbox/obr.xlsx", overwrite = TRUE)
+write_file_to_s3("obr.xlsx", "alpha-app-defcalc/obr.xlsx", overwrite = TRUE)
 saveWorkbook(obr_unformatted, "obr_unformatted.xlsx", overwrite = TRUE)
-write_file_to_s3("obr_unformatted.xlsx", "alpha-sandbox/obr_raw.xlsx", overwrite = TRUE)
+write_file_to_s3("obr_unformatted.xlsx", "alpha-app-defcalc/obr_raw.xlsx", overwrite = TRUE)
 
-write_df_to_csv_in_s3(obr_xlsx, "alpha-sandbox/obr_all.csv", overwrite = TRUE)
-write_df_to_csv_in_s3(obr_xlsx_qtr, "alpha-sandbox/obr_qtr.csv", overwrite = TRUE)
-write_df_to_csv_in_s3(obr_xlsx_pa, "alpha-sandbox/obr_pa.csv", overwrite = TRUE)
-write_df_to_csv_in_s3(obr_xlsx_fy, "alpha-sandbox/obr_fy.csv", overwrite = TRUE)
+write_df_to_csv_in_s3(obr_xlsx, "alpha-app-defcalc/obr_all.csv", overwrite = TRUE)
+write_df_to_csv_in_s3(obr_xlsx_qtr, "alpha-app-defcalc/obr_qtr.csv", overwrite = TRUE)
+write_df_to_csv_in_s3(obr_xlsx_pa, "alpha-app-defcalc/obr_pa.csv", overwrite = TRUE)
+write_df_to_csv_in_s3(obr_xlsx_fy, "alpha-app-defcalc/obr_fy.csv", overwrite = TRUE)
 
 #Create .csv with just the filename of the latest download in it. 
-write_df_to_csv_in_s3(latest_url, "alpha-sandbox/latest_url.csv", overwrite = TRUE)
+write_df_to_csv_in_s3(latest_url, "alpha-app-defcalc/latest_url.csv", overwrite = TRUE)
 
 #deletes obr.xlsx from directory
 file.remove(temp_obr_xlsx)
