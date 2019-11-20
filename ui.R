@@ -72,6 +72,10 @@ tabPanel("Deflator Calculator",
      conditionalPanel(
        condition = "input.dc_tabs == 'Output'",
         downloadButton("dc_download", label = "Download Results")
+     ),
+     conditionalPanel(
+       condition = "input.dc.tabs == '% Change'",
+        selectInput(inputId = "dc_pchange", label = "Percentage Change", choices = c("Year-on-Year % Change","BaseYear-to-Year"))
      )
    ),
                          
@@ -86,7 +90,11 @@ tabPanel("Deflator Calculator",
       # output tab to display transformed data
       tabPanel("Output",
           rHandsontableOutput("cold")
-     )
+     ),
+     
+      tabPanel("% Change",
+          rHandsontableOutput("coldest")     
+      )
   )
 )
 

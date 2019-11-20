@@ -232,7 +232,7 @@ shinyServer(function(session, input, output) {
       rhandsontable(dc_df_input, col_highlight = 2,
                     useTypes = TRUE, stretchH = "all", colHeaders = unlist(list(dc_chosenindex$inputperiods))) %>% hot_cols(renderer = "function(instance, td, row, col, prop, value, cellProperties) {
     Handsontable.renderers.NumericRenderer.apply(this, arguments); if(value == 0 ){
-    td.style.color = 'gray'; td.style.background = 'white'} else if (value != 0) {td.style.color = 'black';} 
+    td.style.color = 'rgb(235, 235, 235)'; td.style.background = 'white'} else if (value != 0) {td.style.color = 'black';} 
   }")
       }
     })
@@ -303,9 +303,11 @@ shinyServer(function(session, input, output) {
     if (!is.null(dc_df_output)) {
       rhandsontable(dc_df_output, 
                     useTypes = TRUE, stretchH = "all", colHeaders = unlist(list(dc_chosenindex$inputperiods)), readOnly = TRUE) %>% hot_cols(renderer = "function(instance, td, row, col, prop, value, cellProperties) {
-    Handsontable.renderers.NumericRenderer.apply(this, arguments); if(value == 0 ){
-    td.style.color = 'gray'; td.style.background = 'white'} else if (value != 0) {td.style.color = 'black';} 
-  }")
+    Handsontable.renderers.NumericRenderer.apply(this, arguments); if(value == 0.00){
+    td.style.color = 'rgb(235, 235, 235)'; td.style.background = 'white'; } else if (value != 0) {td.style.color = 'black';}
+  }") %>% hot_col(which(dc_chosenindex$inputperiods == input$dc_fromto), renderer = "
+    function(instance, td, row, col, prop, value, cellProperties){td.style.textAlign = 'right'; td.style.color = 'rgb(0,0,0)'; td.style.background = 'rgb(242, 243, 245)';}")
+                            
   }
   })
   
@@ -322,7 +324,7 @@ shinyServer(function(session, input, output) {
     
     dc_download_vector <- 0*dc_chosenindex$final[,startrow$dc:(endrow$dc-1)]
     print(dc_download_vector)
-    dc_download_combine <- t(matrix(c(dc_download_title,dc_download_date,sub(0,"",dc_download_vector))))
+    dc_download_combine <- t(matrix(c(dc_download_date,sub(0,"",dc_download_vector))))
     
     dc_download_input = hot_to_r(input$hot)
     dc_download_output = hot_to_r(input$cold)
@@ -347,5 +349,32 @@ shinyServer(function(session, input, output) {
   )
         
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DEFLATOR CALCULATOR: OUTPUT | END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DEFLATOR CALCULATOR: OUTPUT - % CHANGE | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   
+  pc = function(x,y){(x-y)/y}
+  
+  dc_data_output_pc = reactive({
+    
+    dc_df_out_pc = hot_to_r(input$cold)
+    
+    dc_df_output_pc = as.data.frame(pc(dc_df_out_pc,dc_df_out_pc[,which(dc_chosenindex$inputperiods == input$dc_fromto)]))
+    
+    })
+  
+  output$coldest <- renderRHandsontable({
+    dc_df_output_pc = dc_data_output_pc()
+    if (!is.null(dc_df_output_pc)) {
+      rhandsontable(dc_df_output_pc, 
+                    useTypes = TRUE, stretchH = "all", colHeaders = unlist(list(dc_chosenindex$inputperiods)), readOnly = TRUE) %>% hot_cols(format = "0.0%", renderer = "function(instance, td, row, col, prop, value, cellProperties) {
+    Handsontable.renderers.NumericRenderer.apply(this, arguments); if(value == 0.00){
+    td.style.color = 'rgb(235, 235, 235)'; td.style.background = 'white'; } else if (value != 0) {td.style.color = 'black';}
+  }") %>% hot_col(which(dc_chosenindex$inputperiods == input$dc_fromto), renderer = "
+    function(instance, td, row, col, prop, value, cellProperties){td.style.textAlign = 'right'; td.style.color = 'rgb(0,0,0)'; td.style.background = 'rgb(242, 243, 245)';}")
+      
+    }
+  })
+  
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DEFLATOR CALCULATOR: OUTPUT - % CHANGE | END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  
+  
+
 })
