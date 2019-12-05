@@ -40,7 +40,7 @@ ui =
      sidebarPanel(
        # dropdown menus: indices = different indices available; period = frequency of data; baseyear = chosen base year
        selectInput(inputId = "i_indices", label = "Index", choices = colnames(index_options)),
-       selectInput(inputId = "i_period", label = "Period Reference", choices = c("Quarterly", "Calendar Year", "Financial Year")),
+       selectInput(inputId = "i_period", label = "Period Reference", choices = c("Financial Year", "Quarterly", "Calendar Year")),
        uiOutput("i_base"),
        downloadButton("i_download", label = "Download Displayed Data"),
        downloadButton("i_downloadall", label = "Download Full Raw Data")
@@ -59,23 +59,23 @@ tabPanel("Deflator Calculator",
   sidebarPanel(
      p("Please select the correct options below before copying data into the 'Input Table' as changing options after may reset your data.", style = "font-weight: bold; font-family: Arial, Helvetica, sans-serif; color: red"),
      # dropdown menus: indices = different indices available; period = frequency of data; realnom = real or nominal adjustment; slideryears = years covered in input data
-     selectInput(inputId = "dc_indices", label = "Index", choices = colnames(index_options)),
+     selectInput(inputId = "dc_indices", label = "Index", choices = colnames(index_options), selected = "GDP deflator"),
      selectInput(inputId = "dc_realnom", label = "Conversion: Real/Nominal", choices = c("Real to Nominal", "Nominal to Real")),
      uiOutput("dc_fromto"),
      conditionalPanel(
        condition = "input.dc_tabs == 'Input'",
-        selectInput(inputId = "dc_period", label = "Period Reference", choices = c("Quarterly", "Calendar Year", "Financial Year")),
+        selectInput(inputId = "dc_period", label = "Period Reference", choices = c("Financial Year","Quarterly", "Calendar Year")),
         sliderTextInput(inputId = "dc_slider", label = "Selected Time Period Range",
-                        choices = rownames(index_obr_qtr), selected = rownames(index_obr_qtr)[c(1, nrow(index_obr_qtr))]),
-        numericInput(inputId = "dc_inputrows", label = "Number of Required Rows", value = 10, min = 1, step = 1)
+                        choices = rownames(index_obr_fy), selected = rownames(index_obr_fy)[c(1, nrow(index_obr_fy))]),
+        numericInput(inputId = "dc_inputrows", label = "Number of Required Rows", value = 15, min = 1, step = 1)
       ),
      conditionalPanel(
        condition = "input.dc_tabs == 'Output'",
         downloadButton("dc_download", label = "Download Results")
      ),
      conditionalPanel(
-       condition = "input.dc.tabs == '% Change'",
-        selectInput(inputId = "dc_pchange", label = "Percentage Change", choices = c("Year-on-Year % Change","BaseYear-to-Year"))
+       condition = "input.dc_tabs == '% Change'",
+        selectInput(inputId = "dc_pchange", label = "Percentage Change", choices = c("Base-to-period","Period-to-period"))
      )
    ),
                          
