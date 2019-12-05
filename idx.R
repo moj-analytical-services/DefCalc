@@ -19,12 +19,20 @@ names(index_obr_raw)[2:ncol(index_obr_raw)] <- ""
 #Download cleaned OBR data .csv, and re-adds rownames
 index_obr_all <- s3_path_to_full_df("alpha-app-defcalc/obr_all.csv")
 index_obr_all <- data.frame(index_obr_all, row.names = 1)
+index_obr_all$yoy_None <- 0
+index_obr_all$index_None <- 100
 index_obr_qtr <- s3_path_to_full_df("alpha-app-defcalc/obr_qtr.csv")
 index_obr_qtr <- data.frame(index_obr_qtr, row.names = 1)
+index_obr_qtr$yoy_None <- 0
+index_obr_qtr$index_None <- 100
 index_obr_pa <- s3_path_to_full_df("alpha-app-defcalc/obr_pa.csv")
 index_obr_pa <- data.frame(index_obr_pa, row.names = 1)
+index_obr_pa$yoy_None <- 0
+index_obr_pa$index_None <- 100
 index_obr_fy <- s3_path_to_full_df("alpha-app-defcalc/obr_fy.csv")
 index_obr_fy <- data.frame(index_obr_fy, row.names = 1)
+index_obr_fy$yoy_None <- 0
+index_obr_fy$index_None <- 100
 latest_url_csv <- s3_path_to_full_df("alpha-app-defcalc/latest_url.csv")
 latest_url_csv <- data.frame(latest_url_csv, row.names = 1)
 

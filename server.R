@@ -20,6 +20,7 @@ shinyServer(function(session, input, output) {
   
 # creates variable to that aligns with the app's default settings (i.e. prevents loading errors)
   i_chosenindex = reactiveValues(rownames = rownames(index_obr_qtr), data = index_obr_qtr)
+  shift = reactiveValues()
   
 # ensures correct dataframe is chosen for future use, based on user input
   observeEvent(input$i_period, {
@@ -47,19 +48,28 @@ shinyServer(function(session, input, output) {
   observe({
     # prevents select() error because code runs too fast
     if (!is.null(input$i_base)) {
+      
+      i_shift = ifelse(input$i_indices == "None", 1, 8)
+      
+      print(i_shift)
+      
       # creates base_value to convert all values with for re-basing; equals 100 if 'Default' base selected (to not-affect index)
+      
       base_value <- ifelse(input$i_base == "Default",
                            100,
-                           index_obr_all[input$i_base, which(colnames(i_chosenindex$data) == input$i_indices) + 8]
+                           index_obr_all[input$i_base, which(colnames(i_chosenindex$data) == input$i_indices) + i_shift]
       )
+      
+      print(i_chosenindex$data)
+      print(input$i_indices)
       
       # mutates index (i.e. re-bases it)
       i_chosenindex$mutate = i_chosenindex$data %>%
-        mutate_at(.vars = vars(which(colnames(i_chosenindex$data) == input$i_indices) + 8), .funs = ~ 100 * . / base_value) %>%
+        mutate_at(.vars = vars(which(colnames(i_chosenindex$data) == input$i_indices) + i_shift), .funs = ~ 100 * . / base_value) %>%
         
         # rename 'yoy_' and 'index_' to be constant
-        rename("YoY (%)" = input$i_indices) %>%
-        rename("Index" = which(colnames(i_chosenindex$data) == input$i_indices) + 8) %>%
+        rename("YoY (%)" = input$i_indices) %>% #ERROR HERE, the Index rename line below is replacing the YOY%. 
+        rename("Index" = which(colnames(i_chosenindex$data) == input$i_indices) + i_shift) %>%
         
         # creates column for periods (e.g. 2008, 2009...)
         mutate(Period = i_chosenindex$rownames) %>%
@@ -88,6 +98,8 @@ shinyServer(function(session, input, output) {
         
         # selects columns for output table
         select("Period", "Index", "YoY (%)", "is_base", "is_forecast", "is_forecast_base")
+  
+    
       
       # produces output table,
       output$i_indextable <- DT::renderDT(
@@ -107,6 +119,7 @@ shinyServer(function(session, input, output) {
           formatStyle(columns = c(2:3), 'text-align' = 'right') %>%
           
           # highlights row which is Base Period
+          
           formatStyle(columns = "is_base", target = 'row',
                       backgroundColor = styleEqual(c('1'), c('lightBlue'))) %>%
           # highlights rows which are forecasts
@@ -146,7 +159,7 @@ shinyServer(function(session, input, output) {
 # all variables pre-fixed with 'dc_' to prevent duplication with other outputs
   
   # creates variable to that aligns with the app's default settings (i.e. prevents loading errors)
-  dc_chosenindex = reactiveValues(rownames = rownames(index_obr_qtr), data = index_obr_qtr)
+  dc_chosenindex = reactiveValues(rownames = rownames(index_obr_fy), data = index_obr_fy)
   
   # ensures correct dataframe is chosen for future use, based on user input
   observeEvent(input$dc_period, {
@@ -173,12 +186,7 @@ shinyServer(function(session, input, output) {
     }, ignoreInit = TRUE)
     
   # generates dropdown options for convert from/to, based on user input
-  output$dc_fromto <- renderUI({
-    if (input$dc_realnom == "Real to Nominal") {
-      selectInput(inputId = "dc_fromto", label = "Convert From:", choices = c(dc_chosenindex$rownames))
-      } else { selectInput(inputId = "dc_fromto", label = "Convert To:", choices = c(dc_chosenindex$rownames))
-      }
-  })
+
   
   # generates the correct periods to display in table ('if' statement prevents app crashing before UI loads)
   startrow = reactiveValues()
@@ -196,6 +204,13 @@ shinyServer(function(session, input, output) {
       
     } else { dc_chosenindex$inputperiods = dc_chosenindex$rownames }                 
     
+    output$dc_fromto <- renderUI({
+      if (input$dc_realnom == "Real to Nominal") {
+        selectInput(inputId = "dc_fromto", label = "Convert From (Base-year):", choices = c(dc_chosenindex$inputperiods))
+      } else { selectInput(inputId = "dc_fromto", label = "Convert To (Base-year):", choices = c(dc_chosenindex$inputperiods))
+      }
+    })
+                  
   })
   
   # creates variables necessary for input table
@@ -247,11 +262,13 @@ shinyServer(function(session, input, output) {
                     
       if(!is.null(dc_chosenindex$rownames)){
    
+      dc_shift = ifelse(input$dc_indices == "None", 1, 8)
+        
       #Finding the relevant base index and
    
-      dc_base_value <- dc_chosenindex$data[input$dc_fromto, which(colnames(dc_chosenindex$data) == input$dc_indices) + 8]
+      dc_base_value <- dc_chosenindex$data[input$dc_fromto, which(colnames(dc_chosenindex$data) == input$dc_indices) + dc_shift]
    
-      dc_chosenindex$mutate <- dc_chosenindex$data[, which(colnames(dc_chosenindex$data) == input$dc_indices) + 8]
+      dc_chosenindex$mutate <- dc_chosenindex$data[, which(colnames(dc_chosenindex$data) == input$dc_indices) + dc_shift]
       
       ifelse(input$dc_realnom == "Real to Nominal",
                                      
@@ -298,9 +315,7 @@ shinyServer(function(session, input, output) {
                     useTypes = TRUE, stretchH = "all", colHeaders = unlist(list(dc_chosenindex$inputperiods)), readOnly = TRUE) %>% hot_cols(renderer = "function(instance, td, row, col, prop, value, cellProperties) {
     Handsontable.renderers.NumericRenderer.apply(this, arguments); if(value == 0.00){
     td.style.color = 'rgb(235, 235, 235)'; td.style.background = 'white'; } else if (value != 0) {td.style.color = 'black';}
-  }") %>% hot_col(which(dc_chosenindex$inputperiods == input$dc_fromto), renderer = "
-    function(instance, td, row, col, prop, value, cellProperties){td.style.textAlign = 'right'; td.style.color = 'rgb(0,0,0)'; td.style.background = 'rgb(242, 243, 245)';}")
-                            
+  }")
   }
   })
   
@@ -344,15 +359,39 @@ shinyServer(function(session, input, output) {
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DEFLATOR CALCULATOR: OUTPUT | END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DEFLATOR CALCULATOR: OUTPUT - % CHANGE | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   
+  
+  observeEvent(input$dc_fromto,{
+               
+  change = ifelse(input$dc_fromto == "Real to Nominal", "Nominal", "Real")})
+               
   pc = function(x,y){(x-y)/y}
+  
+  fix_nan <- function(x){
+    x[is.nan(x)] <- 0
+    x
+  }
   
   dc_data_output_pc = reactive({
     
     dc_df_out_pc = hot_to_r(input$cold)
     
-    dc_df_output_pc = as.data.frame(pc(dc_df_out_pc,dc_df_out_pc[,which(dc_chosenindex$inputperiods == input$dc_fromto)]))
+    dc_df_out_pc_lag = dc_df_out_pc[,1:(length(dc_df_out_pc)-1)]
     
-    })
+    dc_df_out_pc_lag = cbind(a = dc_df_out_pc[,1],dc_df_out_pc_lag)
+
+    if(input$dc_pchange == "Base-to-period"){
+    
+        (dc_df_output_pc = as.data.frame(pc(dc_df_out_pc,dc_df_out_pc[,which(dc_chosenindex$inputperiods == input$dc_fromto)])))} 
+    
+      else {
+        
+        (dc_df_output_pc = as.data.frame(pc(dc_df_out_pc,dc_df_out_pc_lag)))
+        
+        dc_df_output_pc[is.na(dc_df_output_pc)] <- 0
+        
+        print(dc_df_output_pc)
+            }
+      })
   
   output$coldest <- renderRHandsontable({
     dc_df_output_pc = dc_data_output_pc()
@@ -361,9 +400,7 @@ shinyServer(function(session, input, output) {
                     useTypes = TRUE, stretchH = "all", colHeaders = unlist(list(dc_chosenindex$inputperiods)), readOnly = TRUE) %>% hot_cols(format = "0.0%", renderer = "function(instance, td, row, col, prop, value, cellProperties) {
     Handsontable.renderers.NumericRenderer.apply(this, arguments); if(value == 0.00){
     td.style.color = 'rgb(235, 235, 235)'; td.style.background = 'white'; } else if (value != 0) {td.style.color = 'black';}
-  }") %>% hot_col(which(dc_chosenindex$inputperiods == input$dc_fromto), renderer = "
-    function(instance, td, row, col, prop, value, cellProperties){td.style.textAlign = 'right'; td.style.color = 'rgb(0,0,0)'; td.style.background = 'rgb(242, 243, 245)';}")
-      
+  }") 
     }
   })
   
