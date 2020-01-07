@@ -23,9 +23,9 @@ ui =
                  
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ INDICES TABLE | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                 
-# all variables pre-fixed with 'i_' to prevent duplication with other outputs                
+# All variables pre-fixed with 'i_' to prevent duplication with other outputs                
                 
-# guidance tab
+# Guidance tab
 
   tabPanel("Guidance",
          mainPanel(
@@ -35,10 +35,10 @@ ui =
          )
   ),
                 
-  # indices tab (inputs pre-fixed with: 'i_')
+  # Indices tab (inputs pre-fixed with: 'i_')
   tabPanel("Indices",
      sidebarPanel(
-       # dropdown menus: indices = different indices available; period = frequency of data; baseyear = chosen base year
+       # Dropdown menus: indices = different indices available; period = frequency of data; baseyear = chosen base year
        selectInput(inputId = "i_indices", label = "Index", choices = colnames(index_options)),
        selectInput(inputId = "i_period", label = "Period Reference", choices = c("Financial Year", "Quarterly", "Calendar Year")),
        uiOutput("i_base"),
@@ -53,12 +53,12 @@ ui =
                 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DEFLATOR CALCULATOR | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
                 
-# all variables pre-fixed with 'dc_' to prevent duplication with other outputs                
+# All variables pre-fixed with 'dc_' to prevent duplication with other outputs                
                 
 tabPanel("Deflator Calculator",
   sidebarPanel(
      p("Please select the correct options below before copying data into the 'Input Table' as changing options after may reset your data.", style = "font-weight: bold; font-family: Arial, Helvetica, sans-serif; color: red"),
-     # dropdown menus: indices = different indices available; period = frequency of data; realnom = real or nominal adjustment; slideryears = years covered in input data
+     # Dropdown menus: indices = different indices available; period = frequency of data; realnom = real or nominal adjustment; slideryears = years covered in input data
      selectInput(inputId = "dc_indices", label = "Index", choices = colnames(index_options), selected = "GDP deflator"),
      selectInput(inputId = "dc_realnom", label = "Conversion: Real/Nominal", choices = c("Real to Nominal", "Nominal to Real")),
      uiOutput("dc_fromto"),
@@ -82,12 +82,12 @@ tabPanel("Deflator Calculator",
   mainPanel(
      tabsetPanel(id = "dc_tabs", type = "tabs",
                  
-      # input tab for user data
+      # Input tab for user data
       tabPanel("Input",
           rHandsontableOutput("hot")
       ),
                                    
-      # output tab to display transformed data
+      # Output tab to display transformed data
       tabPanel("Output",
           rHandsontableOutput("cold")
      ),
