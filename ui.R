@@ -75,7 +75,7 @@ tabPanel("Deflator Calculator",
      ),
      conditionalPanel(
        condition = "input.dc_tabs == '% Change'",
-        selectInput(inputId = "dc_pchange", label = "Percentage Change", choices = c("Base-to-period","Period-to-period"))
+        selectInput(inputId = "dc_pchange", label = "Percentage Change", choices = c("Base-to-period", "Period-to-period"))
      )
    ),
                          

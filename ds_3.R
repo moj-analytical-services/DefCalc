@@ -60,10 +60,10 @@ download.file(obr_url$url,destfile = temp_obr_xlsx,mode = "wb")
 # Check which table in the spreadsheet contains the inflation figures. 
 obr_contents = read_excel(temp_obr_xlsx,sheet = "Contents")
 names(obr_contents) = "contents"
-infpat <- 'Table* (.*):.Inflation*'
-ginf = grep(infpat,obr_contents$contents)
-obrsheet <- obr_contents$contents[ginf]
-obrsheet <- gsub(infpat,'\\1',obrsheet) 
+infopath <- 'Table* (.*):.Inflation*'
+ginfo = grep(infopath,obr_contents$contents)
+obrsheet <- obr_contents$contents[ginfo]
+obrsheet <- gsub(infopath,'\\1',obrsheet) 
 
 # Read the sheet defined by 'obrsheet' in the publication.
 obr_xlsx = read_excel(temp_obr_xlsx,sheet = obrsheet)

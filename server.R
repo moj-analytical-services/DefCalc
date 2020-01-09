@@ -65,7 +65,7 @@ shinyServer(function(session, input, output) {
         mutate_at(.vars = vars(which(colnames(i_chosenindex$data) == input$i_indices) + i_shift), .funs = ~ 100 * . / base_value) %>%
         
         # Rename 'yoy_' and 'index_' to be constant
-        rename("YoY (%)" = input$i_indices) %>% #ERROR HERE, the Index rename line below is replacing the YOY%. 
+        rename("YoY (%)" = input$i_indices) %>%
         rename("Index" = which(colnames(i_chosenindex$data) == input$i_indices) + i_shift) %>%
         
         # Creates column for periods (e.g. 2008, 2009...)
@@ -353,9 +353,9 @@ shinyServer(function(session, input, output) {
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DEFLATOR CALCULATOR: OUTPUT (% CHANGE) | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   
   
-  observeEvent(input$dc_fromto,{
-               
-  change = ifelse(input$dc_fromto == "Real to Nominal", "Nominal", "Real")})
+  observeEvent(input$dc_fromto, {
+    change = ifelse(input$dc_fromto == "Real to Nominal", "Nominal", "Real")
+  })
                
   pc = function(x,y){(x-y)/y}
   
@@ -368,17 +368,17 @@ shinyServer(function(session, input, output) {
     
     dc_df_out_pc = hot_to_r(input$cold)
     
-    dc_df_out_pc_lag = dc_df_out_pc[,1:(length(dc_df_out_pc)-1)]
+    dc_df_out_pc_lag = dc_df_out_pc[, 1:(length(dc_df_out_pc) - 1)]
     
-    dc_df_out_pc_lag = cbind(a = dc_df_out_pc[,1],dc_df_out_pc_lag)
+    dc_df_out_pc_lag = cbind(a = dc_df_out_pc[, 1], dc_df_out_pc_lag)
 
     if(input$dc_pchange == "Base-to-period"){
     
-        (dc_df_output_pc = as.data.frame(pc(dc_df_out_pc,dc_df_out_pc[,which(dc_chosenindex$inputperiods == input$dc_fromto)])))} 
+        (dc_df_output_pc = as.data.frame(pc(dc_df_out_pc, dc_df_out_pc[, which(dc_chosenindex$inputperiods == input$dc_fromto)])))} 
     
       else {
         
-        (dc_df_output_pc = as.data.frame(pc(dc_df_out_pc,dc_df_out_pc_lag)))
+        (dc_df_output_pc = as.data.frame(pc(dc_df_out_pc, dc_df_out_pc_lag)))
         
         dc_df_output_pc[is.na(dc_df_output_pc)] <- 0
         

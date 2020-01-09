@@ -70,13 +70,91 @@ colnames(index_obr_fy) <- colnames(index_obr_fy) %>%
   substring(5) %>%
   str_replace_all("[.]", " ")
 
-# Date information, to work out which years are forecasts
-latest_url_entry <- latest_url_csv %>% filter(latest==1)
-year_known <- as.numeric(str_sub(latest_url_entry$Date, -4, -1))-1
-year_forecast <- c(paste0("/",as.numeric(str_sub(year_known,-2,-1))+1), 
-                   year_known+1, year_known+2, year_known+3, year_known+4, year_known+5, year_known+6)
-
 # Remove imported excel file
 file.remove("obr_raw.xlsx")
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ FILE IMPORT/CLEAN-UP | END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ FORECAST PERIODS | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Scrapes raw OBR file to find cell containing date information (best available resource)
+date_row <- grep(paste(month.name, collapse ="|"), index_obr_raw[, 1])
+date_filter <- index_obr_raw[date_row,]
+date_cell <- date_filter[, colSums(date_filter != "") != 0]
+
+# Identify the year
+date_year <- as.numeric(gsub(".*?([0-9]+).*", "\\1", date_cell))
+
+# Identify which month was most recently included in forecast
+for (m in 1:12) {
+  date_month <- grepl(month.name[m], date_cell)
+  if (date_month == TRUE) {
+    date_month <- m
+    break
+  }
+}
+
+# Identify last known full quarter
+for (q in 1:4) {
+  if (date_month/3 == q) {
+    date_qtr <- q
+    break
+  } else if ((date_month/3 < q) & (q != 1)) {
+    date_qtr <- q-1
+    break
+  } else if ((date_month/3 < q) & (q = 1)) {
+    date_qtr <- 4
+    break
+    }
+}
+
+# Generate calendar year forecast periods
+known_pa <- date_year -1
+
+fcst_pa <- list()
+  for (pa in c(1:6)) {
+    fcst_pa[[pa]] <- known_pa + pa
+    }
+
+# Generate quarterly forecast periods (a); find last known quarter
+known_qtr <- if (date_qtr == 4) {
+  paste0(known_pa, "Q", date_qtr)
+} else paste0(date_year, "Q", date_qtr)
+
+# Generate quarterly forecast periods (b); finish calendar year for 'a'
+fcst_qtr_1 <- list()
+  for (qtr_1 in c((as.numeric(str_sub(known_qtr, -1))+1):4)) {
+    if (str_sub(known_qtr, -1) == 4) {
+      break
+  } else fcst_qtr_1[[qtr_1]] <- paste0(str_sub(known_qtr,1,-2), qtr_1)
+}
+
+# Generate quarterly forecast periods (c); find future calendar years
+fcst_qtr_2a <- list()
+  for (qtr_2a in c(1:6)) {
+    fcst_qtr_2a[[qtr_2a]] <- paste0(as.numeric(str_sub(known_qtr, 1, 4)) + qtr_2a)
+  }
+
+# Generate quarterly forecast periods (d); convert 'c' into quarters
+fcst_qtr_2b <- list()
+  for (qtr_2b in c(1:4)) {
+    fcst_qtr_2b[[qtr_2b]] <- paste0(fcst_qtr_2a, "Q", qtr_2b)
+  }
+
+fcst_qtr <- c(fcst_qtr_1, fcst_qtr_2b)
+
+# Generate financial year forecasts
+known_fy <- paste0(str_sub(known_qtr, 1, 4), "/", as.numeric(str_sub(known_qtr, 3, 4)) +1)
+
+fcst_fy <- list()
+  for (fy in c(1:6)) {
+    fcst_fy[[fy]] <- paste0(as.numeric(str_sub(known_fy, 1, 4)) + fy, "/", 
+                            as.numeric(str_sub(known_fy, -2, -1)) + fy)
+  }
+
+# Combine all forecast periods into one list
+year_known <- c(known_pa, known_qtr, known_fy)
+year_forecast <- c(fcst_pa, fcst_qtr, fcst_fy)
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ FORECAST PERIODS | END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
