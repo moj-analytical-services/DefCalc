@@ -158,3 +158,27 @@ year_forecast <- c(fcst_pa, fcst_qtr, fcst_fy)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ FORECAST PERIODS | END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DISCOUNT PERIODS | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Generate list of basic discount periods (1 to 125)
+disc_basic <- list()
+  for (bas in c(1:125)) {
+    disc_basic[[bas]] <- bas
+  }
+
+# Generate list of calendar year discount periods (T-5 to T+150)
+year_now <- as.integer(format(Sys.Date(), "%Y"))
+
+disc_calendar <- list()
+  for (cal in c(1:145)) {
+    disc_calendar[[cal]] <- year_now - 6 + cal
+  }
+
+# Generate list of financial year discount periods (T-5 to T+150)
+disc_financial <- list()
+  for (fin in c(1:145)) {
+    disc_financial[[fin]] <- paste0(year_now - 6 + fin, "/", str_sub((year_now - 5 + fin), -2, -1))
+  }
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DISCOUNT PERIODS | END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+

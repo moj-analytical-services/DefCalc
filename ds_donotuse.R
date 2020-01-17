@@ -10,12 +10,12 @@ library(tidyverse) # dplyr & readr & stringr (plus other functionalities)
 library(s3tools) # importing data from AWS
 library(RCurl) # get information relating to a URL. 
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ WEB SCRAPING FOR FILE | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ WEB SCRAPING FOR OBR FILE | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Create a list of dates between now and 12 months prior. 
 date_today <- as.POSIXlt(Sys.Date())
 date_back <- date_today
 date_back$mon <- date_back$mon - 12
-latest_url <- format(seq(date_back,date_today,"month"),"%B-%Y") %>% as.data.frame(col.names = "Dates")
+latest_url <- format(seq(date_back, date_today, "month"), "%B-%Y") %>% as.data.frame(col.names = "Dates")
 names(latest_url) <- "Date"
 
 # Gives the structure of the URL, which we'll use and replace 'march-2019' with the series of month-years created above.
@@ -24,132 +24,136 @@ ourl <- "https://obr.uk/download/march-2019-economic-and-fiscal-outlook-suppleme
 # Create URLs and test if they exist, create column of URLS and replace with the months_years from above. Check if each URL exists. 
 latest_url$urls <- ourl
 sub = function(x,y,z)gsub(x,y,z)
-latest_url$urls <- mapply(sub,"march-2019",latest_url$Date,latest_url$urls)
-latest_url$exist <- sapply(latest_url$urls,url.exists)
-latest_url$filename <- paste('Economy_supplementary_tables',paste(latest_url$Date,"xlsx",sep="."),sep="_")
-latest_url$filename <- gsub("-","_",latest_url$filename)
+latest_url$urls <- mapply(sub, "march-2019", latest_url$Date, latest_url$urls)
+latest_url$exist <- sapply(latest_url$urls, url.exists)
+latest_url$filename <- paste('Economy_supplementary_tables', paste(latest_url$Date, "xlsx", sep="."), sep="_")
+latest_url$filename <- gsub("-", "_", latest_url$filename)
 
 # Test if files are in S3 and if they're not then indicate the URL that needs to be downloaded.
 s3files <- s3tools::list_files_in_buckets('alpha-app-defcalc')
 mypattern = 'Economy_supplementary_tables_(.*).*'
 
 # Find the pattern above in the list of s3 files, this tells you the number of the file in that list.
-gg = grep(mypattern,s3files$filename)  
+gg = grep(mypattern, s3files$filename)  
 # Create a variable called econ, which is the filename of the file that contains the pattern.
 econ = s3files$filename[gg]  
 # Identify which hyperlink / file in the latest_url dataframe corresponds to the file in s3.
-latest_url$s3 <- ifelse((latest_url$filename %in% econ),1,0)   
+latest_url$s3 <- ifelse((latest_url$filename %in% econ), 1, 0)   
 # Create new column that formats the month-year column into a date format (e.g. dd/mm/yyyy).
-latest_url$latest <- as.Date(paste0(latest_url$Date,"-01"),format ='%B-%Y-%d')
+latest_url$latest <- as.Date(paste0(latest_url$Date, "-01"), format ='%B-%Y-%d')
 # Find the latest date of those URLs that exist, and confirm which is the latest date in the list
 maxi <- max(latest_url$latest[latest_url$exist == TRUE]) 
-latest_url$latest <- ifelse(latest_url$latest == maxi,1,0) 
+latest_url$latest <- ifelse(latest_url$latest == maxi, 1, 0) 
 # If the URL exists, there is no file in s3 and the month is the latest then an udpate is required.
-latest_url$updatereq <- ifelse((latest_url$exist == TRUE & latest_url$s3 == 0 & latest_url$latest == 1),1,0)
+latest_url$updatereq <- ifelse((latest_url$exist == TRUE & latest_url$s3 == 0 & latest_url$latest == 1), 1, 0)
 latest_url$weblink <- paste('https://obr.uk/efo/economic-fiscal-outlook', latest_url$Date,sep = "-")
 
 # Pick out, of the latest_url dataframe, the url that needs to be downloaded and the corresponding filename.
-updateurl <- ifelse(length(latest_url$urls[latest_url$updatereq == 1]) == 0,latest_url$urls[latest_url$s3 == 1 & latest_url$latest == 1],latest_url$urls[latest_url$updatereq == 1])
+updateurl <- ifelse(length(latest_url$urls[latest_url$updatereq == 1]) == 0, latest_url$urls[latest_url$s3 == 1 & latest_url$latest == 1], latest_url$urls[latest_url$updatereq == 1])
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ WEB SCRAPING FOR FILE | END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ WEB SCRAPING FOR OBR FILE | END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ FILE IMPORT/IDENTIFY SHEET | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ OBR FILE IMPORT/IDENTIFY SHEET | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-# Import online Excel OBR datafile into R, through an indirect URL
-ourl = updateurl
-obr_url = GET(ourl)
-temp_obr_xlsx = basename(obr_url$url)
-download.file(obr_url$url,destfile = temp_obr_xlsx,mode = "wb")
+# Only run rest of code if updatereq has a non-zero value
+if (is_empty(which(latest_url$updatereq == 1) == 0) == FALSE) {
+  
+  # Import online Excel OBR datafile into R, through an indirect URL
+  ourl = updateurl
+  obr_url = GET(ourl)
+  temp_obr_xlsx = basename(obr_url$url)
+  download.file(obr_url$url, destfile = temp_obr_xlsx, mode = "wb")
+  
+  # Check which table in the spreadsheet contains the inflation figures. 
+  obr_contents = read_excel(temp_obr_xlsx, sheet = "Contents")
+  names(obr_contents) = "contents"
+  infopath <- 'Table* (.*):.Inflation*'
+  ginfo = grep(infopath, obr_contents$contents)
+  obrsheet <- obr_contents$contents[ginfo]
+  obrsheet <- gsub(infopath, '\\1', obrsheet) 
+  
+  # Read the sheet defined by 'obrsheet' in the publication.
+  obr_xlsx = read_excel(temp_obr_xlsx,sheet = obrsheet)
+  obr_xlsx_unformatted = read_excel(temp_obr_xlsx, sheet = obrsheet)
+  
+  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ OBR FILE IMPORT/IDENTIFY SHEET | END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  
+  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ OBR FILE MANIPULATION | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  
+  # Clean data to prepare for app
+  # Removes empty columns based on if they're entirely 'NA'
+  obr_xlsx <- obr_xlsx[, colSums(is.na(obr_xlsx)) != nrow(obr_xlsx)]
+  # Removes extra rows if they contain any 'NA'; Column 1 assumed to be 'Period', so name is 'NA'
+  obr_xlsx <- obr_xlsx[complete.cases(obr_xlsx[ , 2:ncol(obr_xlsx)]), ]
+  
+  # Convert first row into column names. Explictly assumes Column 1 is 'Period'.
+  colnames(obr_xlsx)<- obr_xlsx[1,] # copy Row 1 to Column names
+  obr_xlsx <- obr_xlsx[-1,] # deletes Row 1
+  names(obr_xlsx)[1] <- "Period" # creates column name for 'Period'
+  
+  # Renames new column names based on if they are YoY changes, or Indices
+  colnames(obr_xlsx) <- make.unique(colnames(obr_xlsx))
+  obr_xlsx_yoy <- obr_xlsx %>% select(-ends_with(".1"))
+  obr_xlsx_index <- obr_xlsx %>% select(ends_with(".1"))
+  colnames(obr_xlsx_index) <- paste("index", colnames(obr_xlsx_yoy[2:ncol(obr_xlsx_yoy)]), sep = "_")
+  colnames(obr_xlsx_yoy) <- paste("yoy", colnames(obr_xlsx_yoy), sep = "_")
+  obr_xlsx <- cbind.data.frame(obr_xlsx_yoy, obr_xlsx_index)
+  names(obr_xlsx)[names(obr_xlsx)=="yoy_Period"] <- "Period" #time period reference
+  
+  # Creates dataframes for data by quarter, annual and financial year splits flexibly (i.e. auto-updates with new spreadsheet)
+  obr_xlsx_qtr <- filter(obr_xlsx, grepl("Q", obr_xlsx$Period)) #quarterly
+  obr_xlsx_pa <- filter(obr_xlsx, nchar(obr_xlsx$Period, type = "chars") == 4, TRUE) #calendar
+  obr_xlsx_fy <- filter(obr_xlsx, grepl("/", obr_xlsx$Period))  #financial
+  
+  # Adds row names to all dataframes (doing this at the start doesn't copy them to new dataframes)
+  obr_xlsx <- data.frame(obr_xlsx, row.names = 1)
+  obr_xlsx_qtr <- data.frame(obr_xlsx_qtr, row.names = 1)
+  obr_xlsx_pa <- data.frame(obr_xlsx_pa, row.names = 1)
+  obr_xlsx_fy <- data.frame(obr_xlsx_fy, row.names = 1)
+  
+  # Creates one workbook as .xlsx
+  obr <- createWorkbook()
+  addWorksheet(obr, sheet = "all")
+  addWorksheet(obr, sheet = "qtr")
+  addWorksheet(obr, sheet = "pa")
+  addWorksheet(obr, sheet = "fy")
+  writeData(obr, sheet = "all", obr_xlsx, colNames = TRUE, rowNames = TRUE)
+  writeData(obr, sheet = "qtr", obr_xlsx_qtr, colNames = TRUE, rowNames = TRUE)
+  writeData(obr, sheet = "pa", obr_xlsx_pa, colNames = TRUE, rowNames = TRUE)
+  writeData(obr, sheet = "fy", obr_xlsx_fy, colNames = TRUE, rowNames = TRUE)
+  
+  # Creates raw data workbook as .xlsx
+  obr_unformatted <- createWorkbook()
+  addWorksheet(obr_unformatted, sheet = "Raw")
+  writeData(obr_unformatted, sheet = "Raw", obr_xlsx_unformatted, colNames = FALSE, rowNames = FALSE)
+  
+  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ OBR FILE MANIPULATION | END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  
+  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ OBR FILE SAVE | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  
+  # Save dataframes as both .xlsx and .csv files (only .csv is used in app)
+  saveWorkbook(obr, temp_obr_xlsx, overwrite = TRUE)
+  write_file_to_s3("obr.xlsx", paste0("alpha-app-defcalc/",temp_obr_xlsx), overwrite = TRUE)
+  
+  # Save dataframes as both .xlsx and .csv files (only .csv is used in app)
+  saveWorkbook(obr, "obr.xlsx", overwrite = TRUE)
+  write_file_to_s3("obr.xlsx", "alpha-app-defcalc/obr.xlsx", overwrite = TRUE)
+  saveWorkbook(obr_unformatted, "obr_unformatted.xlsx", overwrite = TRUE)
+  write_file_to_s3("obr_unformatted.xlsx", "alpha-app-defcalc/obr_raw.xlsx", overwrite = TRUE)
+  
+  write_df_to_csv_in_s3(obr_xlsx, "alpha-app-defcalc/obr_all.csv", overwrite = TRUE)
+  write_df_to_csv_in_s3(obr_xlsx_qtr, "alpha-app-defcalc/obr_qtr.csv", overwrite = TRUE)
+  write_df_to_csv_in_s3(obr_xlsx_pa, "alpha-app-defcalc/obr_pa.csv", overwrite = TRUE)
+  write_df_to_csv_in_s3(obr_xlsx_fy, "alpha-app-defcalc/obr_fy.csv", overwrite = TRUE)
+  
+  # Create .csv with just the filename of the latest download in it. 
+  write_df_to_csv_in_s3(latest_url, "alpha-app-defcalc/latest_url.csv", overwrite = TRUE)
+  
+  # deletes obr.xlsx from directory
+  file.remove(temp_obr_xlsx)
+  file.remove("obr.xlsx")
+  file.remove("obr_unformatted.xlsx")
+  
+}
 
-# Check which table in the spreadsheet contains the inflation figures. 
-obr_contents = read_excel(temp_obr_xlsx,sheet = "Contents")
-names(obr_contents) = "contents"
-infopath <- 'Table* (.*):.Inflation*'
-ginfo = grep(infopath,obr_contents$contents)
-obrsheet <- obr_contents$contents[ginfo]
-obrsheet <- gsub(infopath,'\\1',obrsheet) 
-
-# Read the sheet defined by 'obrsheet' in the publication.
-obr_xlsx = read_excel(temp_obr_xlsx,sheet = obrsheet)
-obr_xlsx_unformatted = read_excel(temp_obr_xlsx,sheet = obrsheet)
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ FILE IMPORT/IDENTIFY SHEET | END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ FILE MANIPULATION | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-# Clean data to prepare for app
-# Removes empty columns based on if they're entirely 'NA'
-obr_xlsx <- obr_xlsx[, colSums(is.na(obr_xlsx)) != nrow(obr_xlsx)]
-# Removes extra rows if they contain any 'NA'; Column 1 assumed to be 'Period', so name is 'NA'
-obr_xlsx <- obr_xlsx[complete.cases(obr_xlsx[ , 2:ncol(obr_xlsx)]), ]
-
-# Convert first row into column names. Explictly assumes Column 1 is 'Period'.
-colnames(obr_xlsx)<- obr_xlsx[1,] # copy Row 1 to Column names
-obr_xlsx <- obr_xlsx[-1,] # deletes Row 1
-names(obr_xlsx)[1] <- "Period" # creates column name for 'Period'
-
-# Renames new column names based on if they are YoY changes, or Indices
-colnames(obr_xlsx) <- make.unique(colnames(obr_xlsx))
-obr_xlsx_yoy <- obr_xlsx %>% select(-ends_with(".1"))
-obr_xlsx_index <- obr_xlsx %>% select(ends_with(".1"))
-colnames(obr_xlsx_index) <- paste("index", colnames(obr_xlsx_yoy[2:ncol(obr_xlsx_yoy)]), sep = "_")
-colnames(obr_xlsx_yoy) <- paste("yoy", colnames(obr_xlsx_yoy), sep = "_")
-obr_xlsx <- cbind.data.frame(obr_xlsx_yoy, obr_xlsx_index)
-names(obr_xlsx)[names(obr_xlsx)=="yoy_Period"] <- "Period" #time period reference
-
-# Creates dataframes for data by quarter, annual and financial year splits flexibly (i.e. auto-updates with new spreadsheet)
-obr_xlsx_qtr <- filter(obr_xlsx, grepl("Q", obr_xlsx$Period)) #quarterly
-obr_xlsx_pa <- filter(obr_xlsx, nchar(obr_xlsx$Period, type = "chars") == 4, TRUE) #calendar
-obr_xlsx_fy <- filter(obr_xlsx, grepl("/", obr_xlsx$Period))  #financial
-
-# Adds row names to all dataframes (doing this at the start doesn't copy them to new dataframes)
-obr_xlsx <- data.frame(obr_xlsx, row.names = 1)
-obr_xlsx_qtr <- data.frame(obr_xlsx_qtr, row.names = 1)
-obr_xlsx_pa <- data.frame(obr_xlsx_pa, row.names = 1)
-obr_xlsx_fy <- data.frame(obr_xlsx_fy, row.names = 1)
-
-# Creates one workbook as .xlsx
-obr <- createWorkbook()
-addWorksheet(obr, sheet = "all")
-addWorksheet(obr, sheet = "qtr")
-addWorksheet(obr, sheet = "pa")
-addWorksheet(obr, sheet = "fy")
-writeData(obr, sheet = "all", obr_xlsx, colNames = TRUE, rowNames = TRUE)
-writeData(obr, sheet = "qtr", obr_xlsx_qtr, colNames = TRUE, rowNames = TRUE)
-writeData(obr, sheet = "pa", obr_xlsx_pa, colNames = TRUE, rowNames = TRUE)
-writeData(obr, sheet = "fy", obr_xlsx_fy, colNames = TRUE, rowNames = TRUE)
-
-# Creates raw data workbook as .xlsx
-obr_unformatted <- createWorkbook()
-addWorksheet(obr_unformatted, sheet = "Raw")
-writeData(obr_unformatted, sheet = "Raw", obr_xlsx_unformatted, colNames = FALSE, rowNames = FALSE)
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ FILE MANIPULATION | END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ FILE SAVE | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-# Save dataframes as both .xlsx and .csv files (only .csv is used in app)
-saveWorkbook(obr, temp_obr_xlsx, overwrite = TRUE)
-write_file_to_s3("obr.xlsx", paste0("alpha-app-defcalc/",temp_obr_xlsx), overwrite = TRUE)
-
-# Save dataframes as both .xlsx and .csv files (only .csv is used in app)
-saveWorkbook(obr, "obr.xlsx", overwrite = TRUE)
-write_file_to_s3("obr.xlsx", "alpha-app-defcalc/obr.xlsx", overwrite = TRUE)
-saveWorkbook(obr_unformatted, "obr_unformatted.xlsx", overwrite = TRUE)
-write_file_to_s3("obr_unformatted.xlsx", "alpha-app-defcalc/obr_raw.xlsx", overwrite = TRUE)
-
-write_df_to_csv_in_s3(obr_xlsx, "alpha-app-defcalc/obr_all.csv", overwrite = TRUE)
-write_df_to_csv_in_s3(obr_xlsx_qtr, "alpha-app-defcalc/obr_qtr.csv", overwrite = TRUE)
-write_df_to_csv_in_s3(obr_xlsx_pa, "alpha-app-defcalc/obr_pa.csv", overwrite = TRUE)
-write_df_to_csv_in_s3(obr_xlsx_fy, "alpha-app-defcalc/obr_fy.csv", overwrite = TRUE)
-
-# Create .csv with just the filename of the latest download in it. 
-write_df_to_csv_in_s3(latest_url, "alpha-app-defcalc/latest_url.csv", overwrite = TRUE)
-
-# deletes obr.xlsx from directory
-file.remove(temp_obr_xlsx)
-file.remove("obr.xlsx")
-file.remove("obr_raw.xlsx")
-file.remove("obr_unformatted.xlsx")
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ FILE SAVE | END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ OBR FILE SAVE | END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

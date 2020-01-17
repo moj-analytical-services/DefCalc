@@ -14,7 +14,6 @@ source("./idx.R")
 
 # Server logic required to create output
 shinyServer(function(session, input, output) {
-  
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ INDICES TABLE | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   
@@ -46,7 +45,7 @@ shinyServer(function(session, input, output) {
     selectInput(inputId = "i_base", label = "Base Period", choices = c("Default", i_chosenindex$rownames))
   })
   
-# Rebases chosen index, and then creates a variable to use in output table
+# Rebases chosen index, and then creates a variable to use in output table, and creates display table
   observe({
     # Prevents select() error because code runs too fast
     if (!is.null(input$i_base)) {
@@ -130,7 +129,7 @@ shinyServer(function(session, input, output) {
   # Download selected data
     output$i_download <- downloadHandler(
       filename = function() {
-        paste("DASD Indexation Tool - Indices - SELECTED ", Sys.Date(), '.csv', sep = '')
+        paste("DASD Indexation Tool - Indices - SELECTED - ", Sys.Date(), '.csv', sep = '')
       },
       content = function(con) {
         write.csv(i_chosenindex$mutate[, 1:3], con)
@@ -140,7 +139,7 @@ shinyServer(function(session, input, output) {
   # Download full raw data
   output$i_downloadall <- downloadHandler(
     filename = function() {
-      paste("DASD Indexation Tool - Indices - RAW ", Sys.Date(), '.csv', sep = '')
+      paste("DASD Indexation Tool - Indices - RAW - ", Sys.Date(), '.csv', sep = '')
     },
     content = function(con) {
       write.csv(index_obr_raw, con)
@@ -151,89 +150,90 @@ shinyServer(function(session, input, output) {
   
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DEFLATOR CALCULATOR: INPUT | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   
-# All variables pre-fixed with 'dc_' to prevent duplication with other outputs
+# All variables pre-fixed with 'def_' to prevent duplication with other outputs
   
   # Creates variable to that aligns with the app's default settings (i.e. prevents loading errors)
-  dc_chosenindex = reactiveValues(rownames = rownames(index_obr_fy), data = index_obr_fy)
+  def_chosenindex = reactiveValues(rownames = rownames(index_obr_fy), data = index_obr_fy)
   
   # Ensures correct dataframe is chosen for future use, based on user input
-  observeEvent(input$dc_period, {
-      if (input$dc_period == "Quarterly") {
-      dc_chosenindex$data = index_obr_qtr
-      dc_chosenindex$rownames = rownames(index_obr_qtr)
-    } else if (input$dc_period == "Calendar Year") {
-      dc_chosenindex$data = index_obr_pa
-      dc_chosenindex$rownames = rownames(index_obr_pa)
-    } else if (input$dc_period == "Financial Year") {
-      dc_chosenindex$data = index_obr_fy
-      dc_chosenindex$rownames = rownames(index_obr_fy)
+  observeEvent(input$def_period, {
+      if (input$def_period == "Quarterly") {
+      def_chosenindex$data = index_obr_qtr
+      def_chosenindex$rownames = rownames(index_obr_qtr)
+    } else if (input$def_period == "Calendar Year") {
+      def_chosenindex$data = index_obr_pa
+      def_chosenindex$rownames = rownames(index_obr_pa)
+    } else if (input$def_period == "Financial Year") {
+      def_chosenindex$data = index_obr_fy
+      def_chosenindex$rownames = rownames(index_obr_fy)
     } else {
-      dc_chosenindex$data = index_obr_all
-      dc_chosenindex$rownames = rownames(index_obr_all)
+      def_chosenindex$data = index_obr_all
+      def_chosenindex$rownames = rownames(index_obr_all)
     }
       
   })
 
   # Generates correct slider options in defcalc user interface, based on user input
-    observeEvent(input$dc_period, {
-    updateSliderTextInput(session = session, inputId = "dc_slider",
-                           choices = dc_chosenindex$rownames, selected = dc_chosenindex$rownames[c(1, nrow(dc_chosenindex$data))])
+    observeEvent(input$def_period, {
+    updateSliderTextInput(session = session, inputId = "def_slider",
+                           choices = def_chosenindex$rownames, selected = def_chosenindex$rownames[c(1, nrow(def_chosenindex$data))])
     }, ignoreInit = TRUE)
 
   # Generates the correct periods to display in table ('if' statement prevents app crashing before UI loads)
   startrow = reactiveValues()
   endrow = reactiveValues()
   
-  observeEvent({input$dc_slider
+  observeEvent({input$def_slider
                 }, {
     
-    if(!is.null(input$dc_slider[1]) & !is.null(input$dc_slider[2])) {
+    if(!is.null(input$def_slider[1]) & !is.null(input$def_slider[2])) {
       
-      startrow$dc = which(dc_chosenindex$rownames == input$dc_slider[1])
-      endrow$dc = which(dc_chosenindex$rownames == input$dc_slider[2])
+      startrow$dc = which(def_chosenindex$rownames == input$def_slider[1])
+      endrow$dc = which(def_chosenindex$rownames == input$def_slider[2])
       
-      dc_chosenindex$inputperiods = dc_chosenindex$rownames[startrow$dc:endrow$dc]
+      def_chosenindex$inputperiods = def_chosenindex$rownames[startrow$dc:endrow$dc]
       
-    } else { dc_chosenindex$inputperiods = dc_chosenindex$rownames }                 
+    } else { def_chosenindex$inputperiods = def_chosenindex$rownames }                 
     
-    output$dc_fromto <- renderUI({
-      if (input$dc_realnom == "Real to Nominal") {
-        selectInput(inputId = "dc_fromto", label = "Convert From (Base-year):", choices = c(dc_chosenindex$inputperiods))
-      } else { selectInput(inputId = "dc_fromto", label = "Convert To (Base-year):", choices = c(dc_chosenindex$inputperiods))
+    output$def_fromto <- renderUI({
+      if (input$def_realnom == "Real to Nominal") {
+        selectInput(inputId = "def_fromto", label = "Convert From (Base-year):", choices = c(def_chosenindex$inputperiods))
+      } else { selectInput(inputId = "def_fromto", label = "Convert To (Base-year):", choices = c(def_chosenindex$inputperiods))
       }
     })
                   
   })
   
   # Creates variables necessary for input table
-  values_input = reactiveValues()
-  dc_data = reactiveValues()
+  def_values_input = reactiveValues()
+  def_data = reactiveValues()
   
   # Generates the basic input table...
-  observeEvent({input$dc_inputrows
-                input$dc_slider
+  observeEvent({input$def_inputrows
+                input$def_slider
                 }, {
 
-    if (is.null(values_input[["dc_data$df_input_default"]])) {
-      dc_data$df_input_default = as.data.frame(matrix(0, nrow = input$dc_inputrows, ncol = length(dc_chosenindex$inputperiods)))
+    if (is.null(def_values_input[["def_data$df_input_default"]])) {
+      def_data$df_input_default = as.data.frame(matrix(0, nrow = input$def_inputrows, ncol = length(def_chosenindex$inputperiods)))
         
     } else {
-      dc_data$df_input_default = values_input[["dc_data$df_input_default"]]
+      def_data$df_input_default = def_values_input[["def_data$df_input_default"]]
     }
     
-    dc_data$df_input_default
+    def_data$df_input_default
     
   })
   
   # Produces input table
-  output$hot <- renderRHandsontable({
-    dc_df_input = dc_data$df_input_default
-    if (!is.null(dc_df_input)){
-      rhandsontable(dc_df_input, col_highlight = 2,
-                    useTypes = TRUE, stretchH = "all", colHeaders = unlist(list(dc_chosenindex$inputperiods))) %>% hot_cols(renderer = "function(instance, td, row, col, prop, value, cellProperties) {
-    Handsontable.renderers.NumericRenderer.apply(this, arguments); if(value == 0 ){
-    td.style.color = 'rgb(235, 235, 235)'; td.style.background = 'white'} else if (value != 0) {td.style.color = 'black';} 
-  }")
+  output$def_hot <- renderRHandsontable({
+    def_df_input = def_data$df_input_default
+    if (!is.null(def_df_input)){
+      rhandsontable(def_df_input, col_highlight = 2,
+                    useTypes = TRUE, stretchH = "all", colHeaders = unlist(list(def_chosenindex$inputperiods))) %>% hot_cols(renderer = 
+                    "function(instance, td, row, col, prop, value, cellProperties) {
+                    Handsontable.renderers.NumericRenderer.apply(this, arguments); if(value == 0 ){
+                    td.style.color = 'rgb(235, 235, 235)'; td.style.background = 'white'} else if (value != 0) {td.style.color = 'black';} 
+                    }")
       }
     })
   
@@ -241,48 +241,48 @@ shinyServer(function(session, input, output) {
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DEFLATOR CALCULATOR: DEFLATOR SELECT | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   
-  dc_chosenindex$final = reactiveValues()
-  dc_chosenindex$mutate = reactiveValues()
-  dc_base_value = reactiveValues()
-  dc_shift = reactiveValues()
+  def_chosenindex$final = reactiveValues()
+  def_chosenindex$mutate = reactiveValues()
+  def_base_value = reactiveValues()
+  def_shift = reactiveValues()
   
-  dc_download = reactiveValues()
+  def_download = reactiveValues()
 
-    observeEvent({input$dc_fromto
-                  input$dc_indices
-                  input$dc_realnom
-                  input$dc_slider
-                  input$dc_period
+    observeEvent({input$def_fromto
+                  input$def_indices
+                  input$def_realnom
+                  input$def_slider
+                  input$def_period
                   }, {
                     
-      if(!is.null(dc_chosenindex$rownames)){
+      if(!is.null(def_chosenindex$rownames)){
    
-      dc_shift = ifelse(input$dc_indices == "None", 1, 8)
+      def_shift = ifelse(input$def_indices == "None", 1, 8)
         
       # Finding the relevant base index and:
    
-      dc_base_value <- dc_chosenindex$data[input$dc_fromto, which(colnames(dc_chosenindex$data) == input$dc_indices) + dc_shift]
+      def_base_value <- def_chosenindex$data[input$def_fromto, which(colnames(def_chosenindex$data) == input$def_indices) + def_shift]
    
-      dc_chosenindex$mutate <- dc_chosenindex$data[, which(colnames(dc_chosenindex$data) == input$dc_indices) + dc_shift]
+      def_chosenindex$mutate <- def_chosenindex$data[, which(colnames(def_chosenindex$data) == input$def_indices) + def_shift]
       
       # Converting input values to output values 
-      ifelse(input$dc_realnom == "Real to Nominal",
-              (dc_chosenindex$final <- dc_chosenindex$mutate / dc_base_value),
-              (dc_chosenindex$final <- dc_base_value / dc_chosenindex$mutate))
+      ifelse(input$def_realnom == "Real to Nominal",
+              (def_chosenindex$final <- def_chosenindex$mutate / def_base_value),
+              (def_chosenindex$final <- def_base_value / def_chosenindex$mutate))
       
       # Transmuting the dataframe
-      dc_chosenindex$final = t(dc_chosenindex$final)
-      dc_chosenindex$final
-      dc_chosenindex$colnumber <- which(dc_chosenindex$inputperiods == input$dc_fromto)
+      def_chosenindex$final = t(def_chosenindex$final)
+      def_chosenindex$final
+      def_chosenindex$colnumber <- which(def_chosenindex$inputperiods == input$def_fromto)
     
       # Creates clear rownames for output download option
-      dc_download$inputrows <- 1:input$dc_inputrows
-      dc_download$inputrows <- paste('Input', dc_download$inputrows, sep = ' ')
-      dc_download$outputrows <- 1:input$dc_inputrows
-      dc_download$outputrows <- paste('Output', dc_download$outputrows, sep = ' ')
-      dc_download$indexname <- input$dc_indices
-      # Length of dc_download$rownames must equal length of dc_download_df (see below) else download error
-      dc_download$rownames <- unlist(rbind(list(dc_download$inputrows), list(dc_download$outputrows), dc_download$indexname, "Timestamp"))
+      def_download$inputrows <- 1:input$def_inputrows
+      def_download$inputrows <- paste('Input', def_download$inputrows, sep = ' ')
+      def_download$outputrows <- 1:input$def_inputrows
+      def_download$outputrows <- paste('Output', def_download$outputrows, sep = ' ')
+      def_download$indexname <- input$def_indices
+      # Length of def_download$rownames must equal length of def_download_df (see below) else download error
+      def_download$rownames <- unlist(rbind(list(def_download$inputrows), list(def_download$outputrows), def_download$indexname, "Timestamp"))
       
     }
                     })
@@ -291,23 +291,23 @@ shinyServer(function(session, input, output) {
   
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DEFLATOR CALCULATOR: OUTPUT | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   
-# All variables pre-fixed with 'dc_' to prevent duplication with other outputs
+# All variables pre-fixed with 'def_' to prevent duplication with other outputs
 
   # Generates user output table layout
-  dc_data_output = reactive({
+  def_data_output = reactive({
       
-      dc_df_out = hot_to_r(input$hot)
+      def_df_out = hot_to_r(input$def_hot)
       
-      dc_df_output = as.data.frame(mapply('*', dc_df_out, dc_chosenindex$final[,startrow$dc:endrow$dc]))
+      def_df_output = as.data.frame(mapply('*', def_df_out, def_chosenindex$final[,startrow$dc:endrow$dc]))
   
  })
   
   # Produces output table
-  output$cold <- renderRHandsontable({
-    dc_df_output = dc_data_output()
-    if (!is.null(dc_df_output)) {
-      rhandsontable(dc_df_output, 
-                    useTypes = TRUE, stretchH = "all", colHeaders = unlist(list(dc_chosenindex$inputperiods)), readOnly = TRUE) %>% hot_cols(renderer = 
+  output$def_cold <- renderRHandsontable({
+    def_df_output = def_data_output()
+    if (!is.null(def_df_output)) {
+      rhandsontable(def_df_output, 
+                    useTypes = TRUE, stretchH = "all", colHeaders = unlist(list(def_chosenindex$inputperiods)), readOnly = TRUE) %>% hot_cols(renderer = 
                     "function(instance, td, row, col, prop, value, cellProperties) {
                     Handsontable.renderers.NumericRenderer.apply(this, arguments); if(value == 0.00){
                     td.style.color = 'rgb(235, 235, 235)'; td.style.background = 'white'; } else if (value != 0) {td.style.color = 'black';}
@@ -316,88 +316,376 @@ shinyServer(function(session, input, output) {
   })
   
   # Produce dataframe that combines input, output and deflator index
-  dc_download$date <- paste("This spreadsheet was downloaded using the DASD Indexation Tool on",
+  def_download$date <- paste("This spreadsheet was downloaded using the DASD Indexation Tool on",
                             Sys.Date(), "at", sub("(.*-.*-.*) ","", Sys.time()), sep = " ")
   
-  dc_download_df = reactive({
+  def_download_df = reactive({
     
-    dc_download$vector <- 0*dc_chosenindex$final[, startrow$dc:(endrow$dc-1)]
-    dc_download$combine <- t(matrix(c(dc_download$date, sub(0, "", dc_download$vector))))
+    def_download$vector <- 0*def_chosenindex$final[, startrow$dc:(endrow$dc-1)]
+    def_download$combine <- t(matrix(c(def_download$date, sub(0, "", def_download$vector))))
     
-    dc_download$input = hot_to_r(input$hot)
-    dc_download$output = hot_to_r(input$cold)
-    dc_download$index = dc_chosenindex$final[, startrow$dc:endrow$dc]
+    def_download$input = hot_to_r(input$def_hot)
+    def_download$output = hot_to_r(input$def_cold)
+    def_download$index = def_chosenindex$final[, startrow$dc:endrow$dc]
   
-    dc_download_df = rbind(dc_download$input, dc_download$output, dc_download$index, dc_download$combine)
+    def_download_df = rbind(def_download$input, def_download$output, def_download$index, def_download$combine)
     
-    colnames(dc_download_df) <- dc_chosenindex$inputperiods
+    colnames(def_download_df) <- def_chosenindex$inputperiods
     
-    rownames(dc_download_df) <- dc_download$rownames
+    rownames(def_download_df) <- def_download$rownames
       
-    dc_download_df
+    def_download_df
     
   })
   
   # Download full data (inputs, outputs, and original deflated index)
-  output$dc_download <- downloadHandler(
+  output$def_download <- downloadHandler(
     filename = function() {
       paste("DASD Indexation Tool - Deflator ", Sys.Date(), '.csv', sep = '')
     },
     content = function(con) {
-      write.csv(dc_download_df(), con, row.names = dc_download$rownames)
+      write.csv(def_download_df(), con, row.names = def_download$rownames)
     }
   )
         
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DEFLATOR CALCULATOR: OUTPUT | END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DEFLATOR CALCULATOR: OUTPUT (% CHANGE) | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# All variables pre-fixed with 'def_' to prevent duplication with other outputs    
   
-  
-  observeEvent(input$dc_fromto, {
-    change = ifelse(input$dc_fromto == "Real to Nominal", "Nominal", "Real")
+  observeEvent(input$def_fromto, {
+    change = ifelse(input$def_fromto == "Real to Nominal", "Nominal", "Real")
   })
-               
+  
+  # Percentage change function creation             
   pc = function(x,y){(x-y)/y}
   
+  # Correct NA errors to return 0
   fix_nan <- function(x){
     x[is.nan(x)] <- 0
     x
   }
   
-  dc_data_output_pc = reactive({
+  # Create percentage change dataframe (inc. function)
+  def_data_output_pc = reactive({
     
-    dc_df_out_pc = hot_to_r(input$cold)
+    def_df_out_pc = hot_to_r(input$def_cold)
     
-    dc_df_out_pc_lag = dc_df_out_pc[, 1:(length(dc_df_out_pc) - 1)]
+    def_df_out_pc_lag = def_df_out_pc[, 1:(length(def_df_out_pc) - 1)]
     
-    dc_df_out_pc_lag = cbind(a = dc_df_out_pc[, 1], dc_df_out_pc_lag)
+    def_df_out_pc_lag = cbind(a = def_df_out_pc[, 1], def_df_out_pc_lag)
 
-    if(input$dc_pchange == "Base-to-period"){
+    if(input$def_pchange == "Base-to-period"){
     
-        (dc_df_output_pc = as.data.frame(pc(dc_df_out_pc, dc_df_out_pc[, which(dc_chosenindex$inputperiods == input$dc_fromto)])))} 
+        (def_df_output_pc = as.data.frame(pc(def_df_out_pc, def_df_out_pc[, which(def_chosenindex$inputperiods == input$def_fromto)])))} 
     
       else {
         
-        (dc_df_output_pc = as.data.frame(pc(dc_df_out_pc, dc_df_out_pc_lag)))
+        (def_df_output_pc = as.data.frame(pc(def_df_out_pc, def_df_out_pc_lag)))
         
-        dc_df_output_pc[is.na(dc_df_output_pc)] <- 0
+        def_df_output_pc[is.na(def_df_output_pc)] <- 0
         
-        print(dc_df_output_pc)
             }
       })
   
-  output$coldest <- renderRHandsontable({
-    dc_df_output_pc = dc_data_output_pc()
-    if (!is.null(dc_df_output_pc)) {
-      rhandsontable(dc_df_output_pc, 
-                    useTypes = TRUE, stretchH = "all", colHeaders = unlist(list(dc_chosenindex$inputperiods)), readOnly = TRUE) %>% hot_cols(format = "0.0%", renderer = "function(instance, td, row, col, prop, value, cellProperties) {
-    Handsontable.renderers.NumericRenderer.apply(this, arguments); if(value == 0.00){
-    td.style.color = 'rgb(235, 235, 235)'; td.style.background = 'white'; } else if (value != 0) {td.style.color = 'black';}
-  }") 
+  # Produce percentage change output table
+  output$def_coldest <- renderRHandsontable({
+    def_df_output_pc = def_data_output_pc()
+    if (!is.null(def_df_output_pc)) {
+      rhandsontable(def_df_output_pc, 
+                    useTypes = TRUE, stretchH = "all", colHeaders = unlist(list(def_chosenindex$inputperiods)), readOnly = TRUE) %>% hot_cols(format = "0.0%", renderer = 
+                    "function(instance, td, row, col, prop, value, cellProperties) {
+                    Handsontable.renderers.NumericRenderer.apply(this, arguments); if(value == 0.00){
+                    td.style.color = 'rgb(235, 235, 235)'; td.style.background = 'white'; } else if (value != 0) {td.style.color = 'black';}
+                    }") 
     }
   })
   
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DEFLATOR CALCULATOR: OUTPUT - % CHANGE | END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DEFLATOR CALCULATOR: OUTPUT (% CHANGE) | END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  
   
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DISCOUNTING CALCULATOR: RATE GENERATION | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    
+  
+# All variables pre-fixed with 'disc_' to prevent duplication with other outputs
+  
+# Discount factors, as supplied by HMT Green Book Supplementary Guidance: Discount Factors. Unexpected to change, so hard-coded.
+# https://www.gov.uk/government/publications/the-green-book-appraisal-and-evaluation-in-central-governent (yes, government is spelt incorrectly as at 14.01.2020)
+# https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/685912/Discount_Factors.xlsx
+disc_standard = reactiveValues()
+disc_health = reactiveValues()
+  
+# Create Year 0 for when generating discount rates
+disc_s0 <- data.frame("Year" = 0, "SDR" = 0, "SDF" = 1)
+disc_h0 <- data.frame("Year" = 0, "HDR" = 0, "HDF" = 1)
+  
+# Generate standard discount rates (SDR - .) and standard discount factors (SDF - %)
+  
+  # Create hardcoded standard discount rates, and convert to data.frame
+  disc_standard <- list()
+    for (short in c(1:30)) {
+      disc_standard[[short]] <- 0.035
+    }
+    for (medium in c(31:75)) {
+      disc_standard[[medium]] <- 0.03
+    }
+    for (long in c(76:125)) {
+      disc_standard[[long]] <- 0.025
+    }
+  
+  disc_standard <- disc_standard %>% as.numeric() %>% as.data.frame()
+  colnames(disc_standard)[1] <- "SDR"
+  
+  # Create column for years for easy referencing
+  disc_standard$Year <- unlist(list(c(1:125)))
+  
+  # Bind Year 0 and SDR
+  disc_standard <- bind_rows(disc_s0, disc_standard)
+  
+  # Create standard discount factors
+  for (s in 2:nrow(disc_standard)) {
+    
+    disc_standard$SDF[s] = (disc_standard$SDF[s-1])/(1+disc_standard$SDR[s])
+  }
+  
+  # Split out base year
+  disc_standard0 <- disc_standard
+  disc_standard <- disc_standard[2:126, 1:3]
+  
+# Generate health discount rates (HDR - .) and health discount factors (HDF - %)
+  # Create hardcoded health discount rates, and convert to data.frame
+  disc_health <- list()
+  for (short in c(1:30)) {
+    disc_health[[short]] <- 0.015
+  }
+  for (medium in c(31:75)) {
+    disc_health[[medium]] <- 0.0128571428571429
+  }
+  for (long in c(76:125)) {
+    disc_health[[long]] <- 0.0107142857142857
+  }
+  
+  disc_health <- disc_health %>% as.numeric() %>% as.data.frame()
+  colnames(disc_health)[1] <- "HDR"
+  
+  # Create column for years for easy referencing
+  disc_health$Year <- unlist(list(c(1:125)))
+  
+  # Bind Year 0 and HDR
+  disc_health <- bind_rows(disc_h0, disc_health)
+  
+  # Create health discount factors
+  for (h in 2:nrow(disc_health)) {
+    disc_health$HDF[h] = (disc_health$HDF[h-1])/(1+disc_health$HDR[h])
+  }
+  
+  # Split out base year
+  disc_health0 <- disc_health
+  disc_health <- disc_health[2:126, 1:3]
+  
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DISCOUNTING CALCULATOR: RATE GENERATION | END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DISCOUNTING CALCULATOR: INPUT | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    
+  
+# All variables pre-fixed with 'disc_' to prevent duplication with other outputs
+  
+# Creates variable to that aligns with the app's default settings (i.e. prevents loading errors)
+disc_chosen = reactiveValues()
 
+#  Chooses which discount rate to use (Standard, or Health)
+observeEvent(input$disc_rate, {
+  if (input$disc_rate == "Standard") {
+    disc_chosen$year = as.data.frame(t(disc_standard$Year))
+    disc_chosen$rate = as.data.frame(t(disc_standard$SDR))
+    disc_chosen$factor = as.data.frame(t(disc_standard$SDF))
+  } else {
+        disc_chosen$year = as.data.frame(t(disc_health$Year))
+        disc_chosen$rate = as.data.frame(t(disc_health$HDR))
+        disc_chosen$factor = as.data.frame(t(disc_health$HDF))
+  }
+})
+
+
+# Generates Period Start/End Date inputs
+disc_storedperiod = reactiveValues(start = year_now, end = year_now + 10)
+
+output$disc_periodstart = renderUI({
+  if (input$disc_period == "Basic") {
+    numericInput(inputId = "disc_periodstart", label = "Period Start",
+                 value = 1, min = 1, max = 1)
+  } else
+  if (input$disc_period == "Calendar Year") {
+    numericInput(inputId = "disc_periodstart", label = "Period Start",
+                 value = disc_storedperiod$start, max = disc_storedperiod$end - 1, step = 1)
+  }
+})
+
+output$disc_periodend = renderUI({
+  if (input$disc_period == "Basic") {
+    numericInput(inputId = "disc_periodend", label = "Period End",
+                 value = 10, min = 2, max = 125, step = 1)
+  } else
+    if (input$disc_period == "Calendar Year") {
+      numericInput(inputId = "disc_periodend", label = "Period End",
+                   value = disc_storedperiod$end, min = disc_storedperiod$start + 1, max = disc_storedperiod$start + 125, step = 1)
+    }
+})
+
+
+# Generates column headers for table
+disc_chosen$columns = list() 
+
+observeEvent({input$disc_period
+              input$disc_periodstart
+              input$disc_periodend}, {
+                
+  if ((input$disc_period == "Basic") | (input$disc_period == "Calendar Year")) {
+    disc_chosen$collength <- as.numeric(input$disc_periodend) - as.numeric(input$disc_periodstart) + 1
+    for (p in 1:disc_chosen$collength) {
+        disc_chosen$columns[[p]] <- as.numeric(input$disc_periodstart) - 1 + p
+    }
+  } else if (input$disc_period == "Financial Year") {
+      disc_chosen$collength <- as.numeric(str_sub(as.numeric(input$disc_periodend), 1, 4))
+                                          - as.numeric(str_sub(as.numeric(input$disc_periodend), 1, 4))
+      for (p in 1:disc_chosen$collength) {
+        disc_chosen$columns[[p]] <- paste0(as.numeric(str_sub(input$disc_periodstart, 1, 4)) - 1 + p, "/",
+                                            as.numeric(str_sub(input$disc_periodstart, -2, -1)) - 1 + p)
+      }
+    }
+})
+
+# Creates variables necessary to generate input table
+disc_values_input = reactiveValues()
+disc_data = reactiveValues()
+
+observeEvent({input$disc_inputrows
+              input$disc_period
+              input$disc_periodstart
+              input$disc_periodend}, {
+              
+  if (is.null(disc_values_input[["disc_data$df_input_default"]])) {
+              disc_data$df_input_default = as.data.frame(matrix(0, nrow = input$disc_inputrows, ncol = disc_chosen$collength))
+                  
+  } else { disc_data$df_input_default = disc_values_input[["disc_data$df_input_default"]]
+    }
+                        
+})
+
+# Produces input table
+output$disc_hot <- renderRHandsontable({
+  disc_df_input = disc_data$df_input_default
+  if (!is.null(disc_df_input)){
+    rhandsontable(disc_df_input, col_highlight = 2,
+                  useTypes = TRUE, stretchH = "all", colHeaders = unlist(list(disc_chosen$columns))) %>% hot_cols(renderer = 
+                  "function(instance, td, row, col, prop, value, cellProperties) {
+                  Handsontable.renderers.NumericRenderer.apply(this, arguments); if(value == 0 ){
+                  td.style.color = 'rgb(235, 235, 235)'; td.style.background = 'white'} else if (value != 0) {td.style.color = 'black';} 
+                  }")
+  }
+})
+  
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DISCOUNTING CALCULATOR: INPUT | END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   
+  
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DISCOUNTING CALCULATOR: OUTPUT | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    
+
+# All variables pre-fixed with 'disc_' to prevent duplication with other outputs
+
+# Generates user output table layout
+disc_data_output = reactive({
+  
+  disc_df_out = hot_to_r(input$disc_hot)
+  
+  disc_df_output = as.data.frame(mapply('*', disc_df_out, disc_chosen$factor[, 1:disc_chosen$collength]))
+  
+})
+
+# Produces output table
+output$disc_cold <- renderRHandsontable({
+  disc_df_output = disc_data_output()
+  if (!is.null(disc_df_output)) {
+    rhandsontable(disc_df_output, 
+                  useTypes = TRUE, stretchH = "all", colHeaders = unlist(list(disc_chosen$columns)), readOnly = TRUE) %>% hot_cols(renderer = 
+                  "function(instance, td, row, col, prop, value, cellProperties) {
+                  Handsontable.renderers.NumericRenderer.apply(this, arguments); if(value == 0.00){
+                  td.style.color = 'rgb(235, 235, 235)'; td.style.background = 'white'; } else if (value != 0) {td.style.color = 'black';}
+                  }")
+  }
+})
+
+# Produce dataframe that combines input, output, and discount rate
+disc_download = reactiveValues()
+
+# Download info:
+disc_download$date <- paste("This spreadsheet was downloaded using the DASD Indexation Tool on",
+                           Sys.Date(), "at", sub("(.*-.*-.*) ","", Sys.time()), sep = " ")
+
+observeEvent({input$disc_inputrows
+              input$disc_period
+              input$disc_periodend
+              input$disc_periodstart
+              input$disc_rate}, {
+                
+  # Generate rownames              
+  disc_download$inputrows <- 1:input$disc_inputrows
+  disc_download$inputrows <- paste('Input', disc_download$inputrows, sep = ' ')
+  disc_download$outputrows <- 1:input$disc_inputrows
+  disc_download$outputrows <- paste('Output', disc_download$outputrows, sep = ' ')
+  disc_download$factorname <- input$disc_rate
+  # Length of disc_download$rownames must equal length of disc_download_df (see below) else download error
+  disc_download$rownames <- unlist(rbind(list(disc_download$inputrows), list(disc_download$outputrows), disc_download$factorname, "Timestamp"))
+  
+})  
+
+# Combine inputs, outputs and discount rate into one dataframe
+disc_download_df = reactive({
+  
+  # Actual data frames
+  disc_download$input = hot_to_r(input$disc_hot)
+  disc_download$output = hot_to_r(input$disc_cold)
+  disc_download$factor = disc_chosen$factor
+  
+  # Generate one-dimensional data.frame for date to be same length
+  disc_download$oned <- 0*disc_download$factor[, 2:length(disc_download$factor)]
+  disc_download$datematrix <- t(matrix(c(disc_download$date, sub(0, "", disc_download$oned))))
+  
+  # Data frames combined, and named
+  disc_download_df = rbind(disc_download$input, disc_download$output, disc_download$factor, disc_download$datematrix)
+  
+  colnames(disc_download_df) <- disc_chosen$columns
+  rownames(disc_download_df) <- disc_download$rownames
+  
+  disc_download_df
+  
+})
+
+# Combine base standard/health discount rates into one file
+disc_download_raw <- cbind(disc_standard0, disc_health0[2:3])
+disc_download_raw <- disc_download_raw %>% rename("Standard Discount Rate" = SDR, "Standard Discount Factor" = SDF,
+                             "Health Discount Rate" = HDR, "Health Discount Factor" = HDF)
+rownames(disc_download_raw) <- disc_standard0$Year
+
+# Download full data (inputs, outputs, and original discount rate index)
+output$disc_download <- downloadHandler(
+  filename = function() {
+    paste("DASD Indexation Tool - Discount Rate - USER - ", Sys.Date(), '.csv', sep = '')
+  },
+  content = function(con) {
+    write.csv(disc_download_df(), con)
+  }
+)
+
+# Download raw data (original discount rate indices)
+output$disc_downloadraw <- downloadHandler(
+  filename = function() {
+    paste("DASD Indexation Tool - Discount Rate - RAW - ", Sys.Date(), '.csv', sep = '')
+  },
+  content = function(con) {
+    write.csv(disc_download_raw, con, row.names = FALSE)
+  }
+)
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DISCOUNTING CALCULATOR: OUTPUT | END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   
+
+# Allows app to reconnect after disconnecting due to idle
+  session$allowReconnect(TRUE)
+    
 })
