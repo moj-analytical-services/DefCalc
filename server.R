@@ -20,7 +20,7 @@ shinyServer(function(session, input, output) {
 # All variables pre-fixed with 'i_' to prevent duplication with other outputs
   
 # Creates variable to that aligns with the app's default settings (i.e. prevents loading errors)
-  i_chosenindex = reactiveValues(rownames = rownames(index_obr_qtr), data = index_obr_qtr)
+  i_chosenindex = reactiveValues(rownames = rownames(index_obr_fy), data = index_obr_fy)
   i_shift = reactiveValues()
   
 # Ensures correct dataframe is chosen for future use, based on user input
@@ -505,30 +505,60 @@ observeEvent(input$disc_rate, {
 })
 
 
-# Generates Period Start/End Date inputs
-disc_storedperiod = reactiveValues(start = year_now, end = year_now + 10)
+# Generates correct slider options in defcalc user interface, based on user input
+# Read carefully before making changes. Splitting prevents re-rendering errors/resets.
 
-output$disc_periodstart = renderUI({
-  if (input$disc_period == "Basic") {
-    numericInput(inputId = "disc_periodstart", label = "Period Start",
-                 value = 1, min = 1, max = 1)
-  } else
+# Generates starting positions for each period
+observeEvent({input$disc_period
+              }, {
+
+  output$disc_periodstart <- renderUI({
+                if (input$disc_period == "Basic") {
+                  numericInput(inputId = "disc_periodstart", label = "Start Period",
+                                  value = 1, min = 1, max = 1)
+                 } else if (input$disc_period == "Calendar Year") {
+                   numericInput(inputId = "disc_periodstart", label = "Start Period",
+                                   value = year_now
+                                   , step = 1)
+                 } else if (input$disc_period == "Financial Year") {
+                   textInput(inputId = "disc_periodstart", label = "Start Period",
+                             value = paste0(year_now - 1, "/", str_sub(year_now, -2, -1)))
+                 }
+  })
+  
+  output$disc_periodend <- renderUI({
+    
+                if (input$disc_period == "Basic") {
+                  numericInput(inputId = "disc_periodend", label = "End Period",
+                                value = 10, min = 2, max = 125)
+                 } else if (input$disc_period == "Calendar Year") {
+                   numericInput(inputId = "disc_periodend", label = "End Period",
+                                value = year_now + 10, 
+                                step = 1)
+                 } else if (input$disc_period == "Financial Year") {
+                  textInput(inputId = "disc_periodend", label = "End Period",
+                            value = paste0(year_now + 9, "/", str_sub(year_now + 10, -2, -1)))
+                }
+  })
+
+}, ignoreInit = FALSE)
+
+# Generates new min/max positions for each period, if applicable.
+observeEvent({
+              input$disc_periodstart
+              input$disc_periodend
+              }, {
+  
   if (input$disc_period == "Calendar Year") {
-    numericInput(inputId = "disc_periodstart", label = "Period Start",
-                 value = disc_storedperiod$start, max = disc_storedperiod$end - 1, step = 1)
+    updateNumericInput(session = session, inputId = "disc_periodstart",
+                        value = NULL,
+                        max = input$disc_periodend - 1, step = 1)
+    
+    updateNumericInput(session = session, inputId = "disc_periodend",
+                        value = NULL,
+                        min = input$disc_periodstart + 1, max = input$disc_periodstart + 125, step = 1)
   }
-})
-
-output$disc_periodend = renderUI({
-  if (input$disc_period == "Basic") {
-    numericInput(inputId = "disc_periodend", label = "Period End",
-                 value = 10, min = 2, max = 125, step = 1)
-  } else
-    if (input$disc_period == "Calendar Year") {
-      numericInput(inputId = "disc_periodend", label = "Period End",
-                   value = disc_storedperiod$end, min = disc_storedperiod$start + 1, max = disc_storedperiod$start + 125, step = 1)
-    }
-})
+}, ignoreInit = TRUE)    
 
 
 # Generates column headers for table
@@ -544,13 +574,12 @@ observeEvent({input$disc_period
         disc_chosen$columns[[p]] <- as.numeric(input$disc_periodstart) - 1 + p
     }
   } else if (input$disc_period == "Financial Year") {
-      disc_chosen$collength <- as.numeric(str_sub(as.numeric(input$disc_periodend), 1, 4))
-                                          - as.numeric(str_sub(as.numeric(input$disc_periodend), 1, 4))
+      disc_chosen$collength <- as.numeric(str_sub(input$disc_periodend, 1, 4)) - as.numeric(str_sub(input$disc_periodstart, 1, 4)) + 1
       for (p in 1:disc_chosen$collength) {
         disc_chosen$columns[[p]] <- paste0(as.numeric(str_sub(input$disc_periodstart, 1, 4)) - 1 + p, "/",
                                             as.numeric(str_sub(input$disc_periodstart, -2, -1)) - 1 + p)
       }
-    }
+  }
 })
 
 # Creates variables necessary to generate input table
@@ -641,7 +670,7 @@ disc_download_df = reactive({
   # Actual data frames
   disc_download$input = hot_to_r(input$disc_hot)
   disc_download$output = hot_to_r(input$disc_cold)
-  disc_download$factor = disc_chosen$factor
+  disc_download$factor = disc_chosen$factor[, 1:ncol(disc_download$input)]
   
   # Generate one-dimensional data.frame for date to be same length
   disc_download$oned <- 0*disc_download$factor[, 2:length(disc_download$factor)]
