@@ -9,6 +9,8 @@
 
 library(shiny)
 library(shinyWidgets)
+library(shinyjs)
+library(shinycssloaders)
 
 source("./idx.R")
 
@@ -18,6 +20,22 @@ shinyServer(function(session, input, output) {
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ INDICES TABLE | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   
 # All variables pre-fixed with 'i_' to prevent duplication with other outputs
+  
+  # Disable inputs if Guidance tab is open; !is.null required to disable uiOutput correctly  
+  observe({
+    if((input$i_tabs == 'Guidance') & !is.null(input$i_base)) {
+        disable("i_indices")
+        disable("i_period")
+        disable("i_base")
+        disable("i_download")
+    }
+    else {
+        enable("i_indices")
+        enable("i_period")
+        enable("i_base")
+        enable("i_download")
+    }
+  })
   
 # Creates variable to that aligns with the app's default settings (i.e. prevents loading errors)
   i_chosenindex = reactiveValues(rownames = rownames(index_obr_fy), data = index_obr_fy)
@@ -151,6 +169,30 @@ shinyServer(function(session, input, output) {
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DEFLATOR CALCULATOR: INPUT | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   
 # All variables pre-fixed with 'def_' to prevent duplication with other outputs
+  
+  # Disable inputs if Guidance tab is open; !is.null required to disable uiOutput correctly  
+  observe({
+    if((input$def_tabs == 'Guidance') & !is.null(input$def_fromto)) {
+        disable("def_indices")
+        disable("def_realnom")
+        disable("def_fromto")
+        disable("def_period")
+        disable("def_slider")
+        disable("def_inputrows")
+        disable("def_pchange")
+        disable("def_download")
+    }
+    else {
+        enable("def_indices")
+        enable("def_realnom")
+        enable("def_fromto")
+        enable("def_period")
+        enable("def_slider")
+        enable("def_inputrows")
+        enable("def_pchange")
+        enable("def_download")
+    }
+  })
   
   # Creates variable to that aligns with the app's default settings (i.e. prevents loading errors)
   def_chosenindex = reactiveValues(rownames = rownames(index_obr_fy), data = index_obr_fy)
@@ -488,6 +530,26 @@ disc_h0 <- data.frame("Year" = 0, "HDR" = 0, "HDF" = 1)
   
 # All variables pre-fixed with 'disc_' to prevent duplication with other outputs
   
+  # Disable inputs if Guidance tab is open; !is.null required to disable uiOutput correctly
+  observe({
+    if((input$disc_tabs == 'Guidance') & !is.null(input$disc_periodstart) & !is.null(input$disc_periodend)) {
+        disable("disc_rate")
+        disable("disc_period")
+        disable("disc_periodstart")
+        disable("disc_periodend")
+        disable("disc_inputrows")
+        disable("disc_download")
+    }
+    else {
+        enable("disc_rate")
+        enable("disc_period")
+        enable("disc_periodstart")
+        enable("disc_periodend")
+        enable("disc_inputrows")
+        enable("disc_download")
+    }
+  })
+  
 # Creates variable to that aligns with the app's default settings (i.e. prevents loading errors)
 disc_chosen = reactiveValues()
 
@@ -568,6 +630,9 @@ observeEvent({input$disc_period
               input$disc_periodstart
               input$disc_periodend}, {
                 
+                # Delay required to allow switching between periods without app crashing
+                delay(500, {
+                
   if ((input$disc_period == "Basic") | (input$disc_period == "Calendar Year")) {
     disc_chosen$collength <- as.numeric(input$disc_periodend) - as.numeric(input$disc_periodstart) + 1
     for (p in 1:disc_chosen$collength) {
@@ -580,6 +645,7 @@ observeEvent({input$disc_period
                                             as.numeric(str_sub(input$disc_periodstart, -2, -1)) - 1 + p)
       }
   }
+                })
 })
 
 # Creates variables necessary to generate input table
@@ -590,12 +656,16 @@ observeEvent({input$disc_inputrows
               input$disc_period
               input$disc_periodstart
               input$disc_periodend}, {
+                
+                # Delay required to allow switching changing start/end periods without app crashing
+                delay(1000, {
               
   if (is.null(disc_values_input[["disc_data$df_input_default"]])) {
               disc_data$df_input_default = as.data.frame(matrix(0, nrow = input$disc_inputrows, ncol = disc_chosen$collength))
                   
   } else { disc_data$df_input_default = disc_values_input[["disc_data$df_input_default"]]
-    }
+  }
+                })
                         
 })
 
