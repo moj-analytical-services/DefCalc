@@ -129,7 +129,8 @@ tabPanel("Discount Calculator",
             selectInput(inputId = "disc_period", label = "Period Reference", choices = c("Basic", "Financial Year", "Calendar Year")),
             uiOutput("disc_periodstart"),
             uiOutput("disc_periodend"),
-            numericInput(inputId = "disc_inputrows", label = "Number of Required Rows", value = 10, min = 1, step = 1)
+            numericInput(inputId = "disc_inputrows", label = "Number of Required Rows", value = 10, min = 1, step = 1),
+            actionButton(inputId = "disc_update", label = "Update Table")
         ),
         conditionalPanel(
           condition = "input.disc_tabs == 'Output' || input.disc_tabs == 'Guidance'",
