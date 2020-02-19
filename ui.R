@@ -134,8 +134,8 @@ tabPanel("Discount Calculator",
         ),
         conditionalPanel(
           condition = "input.disc_tabs == 'Output' || input.disc_tabs == 'Guidance'",
-            downloadButton("disc_download", label = "Download Results"),
-            downloadButton("disc_downloadraw", label = "Download Discount Rates")
+            downloadButton("disc_downloadraw", label = "Download Discount Rates"),
+            downloadButton("disc_download", label = "Download Results")
         )
         ),
                               

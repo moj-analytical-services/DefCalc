@@ -144,23 +144,58 @@ shinyServer(function(session, input, output) {
     }
   })
   
+  # Download dataframe creation
+  i_download = reactiveValues()
+
+  i_download$date <- paste("This spreadsheet was downloaded using the DASD Indexation Tool on",
+                             Sys.Date(), "at", sub("(.*-.*-.*) ","", Sys.time()),"using OBR", updatefilename, sep = " ")
+  
+  i_download_select = reactive({
+    
+    i_download$selectvector <- 0*i_chosenindex$mutate[,(ncol(i_chosenindex$mutate)-3)]
+    i_download$selectcombine <- c(i_download$date, sub(0, "", i_download$selectvector))
+    
+    i_download$selectindex <- i_chosenindex$mutate[,2:3]
+    
+    i_download_select = rbind(i_download$selectindex, i_download$selectcombine)
+    
+    colnames(i_download_select) <- c(paste(input$i_indices, "Index"), "YoY (%)")
+    rownames(i_download_select) <- c(i_chosenindex$rownames, "Timestamp")
+    
+    i_download_select
+    
+  })
+  
+  i_download_raw = reactive({
+    
+    i_download$rawvector <- 0*index_obr_all[,ncol(index_obr_all)]
+    i_download$rawcombine <- c(i_download$date, sub(0, "", i_download$rawvector))
+    
+    i_download$rawindex <- index_obr_raw
+    
+    i_download_raw = rbind(i_download$rawindex, i_download$rawcombine)
+    
+    i_download_raw
+    
+  })
+  
   # Download selected data
     output$i_download <- downloadHandler(
       filename = function() {
-        paste("DASD Indexation Tool - Indices - SELECTED - ", Sys.Date(), '.csv', sep = '')
+        paste("DASD Indexation Tool - Indices - ", input$i_indices, "- ", Sys.Date(), '.csv', sep = '')
       },
       content = function(con) {
-        write.csv(i_chosenindex$mutate[, 1:3], con)
+        write.csv(i_download_select(), con, row.names = c(i_chosenindex$rownames, "Timestamp"))
       }
     )
     
   # Download full raw data
   output$i_downloadall <- downloadHandler(
     filename = function() {
-      paste("DASD Indexation Tool - Indices - RAW - ", Sys.Date(), '.csv', sep = '')
+      paste("DASD Indexation Tool - Indices - ALL - ", Sys.Date(), '.csv', sep = '')
     },
     content = function(con) {
-      write.csv(index_obr_raw, con)
+      write.csv(i_download_raw(), con, row.names = FALSE)
     }
   )
   
@@ -359,7 +394,7 @@ shinyServer(function(session, input, output) {
   
   # Produce dataframe that combines input, output and deflator index
   def_download$date <- paste("This spreadsheet was downloaded using the DASD Indexation Tool on",
-                            Sys.Date(), "at", sub("(.*-.*-.*) ","", Sys.time()), sep = " ")
+                            Sys.Date(), "at", sub("(.*-.*-.*) ","", Sys.time()), "using OBR", updatefilename, sep = " ")
   
   def_download_df = reactive({
     
@@ -710,10 +745,6 @@ disc_data_output = reactive({
   
 })
 
-observe({
-  print(disc_data_output())
-})
-
 # Produces output table
 output$disc_cold <- renderRHandsontable({
   disc_df_output = disc_data_output()
@@ -732,7 +763,7 @@ disc_download = reactiveValues()
 
 # Download info:
 disc_download$date <- paste("This spreadsheet was downloaded using the DASD Indexation Tool on",
-                           Sys.Date(), "at", sub("(.*-.*-.*) ","", Sys.time()), sep = " ")
+                           Sys.Date(), "at", sub("(.*-.*-.*) ","", Sys.time()), "using OBR", updatefilename, sep = " ")
 
 observeEvent({input$disc_inputrows
               input$disc_period
@@ -753,7 +784,7 @@ observeEvent({input$disc_inputrows
 })  
 
 # Combine inputs, outputs and discount rate into one dataframe
-disc_download_df = reactive({
+disc_download_select = reactive({
   
   # Actual data frames
   disc_download$input = hot_to_r(input$disc_hot)
@@ -767,18 +798,30 @@ disc_download_df = reactive({
   # Data frames combined, and named
   disc_download_df = rbind(disc_download$input, disc_download$output, disc_download$factor, disc_download$datematrix)
   
-  colnames(disc_download_df) <- disc_chosen$columns
-  rownames(disc_download_df) <- disc_download$rownames
+  colnames(disc_download_select) <- disc_chosen$columns
+  rownames(disc_download_select) <- disc_download$rownames
   
-  disc_download_df
+  disc_download_select
   
 })
 
 # Combine base standard/health discount rates into one file
-disc_download_raw <- cbind(disc_standard0, disc_health0[2:3])
-disc_download_raw <- disc_download_raw %>% rename("Standard Discount Rate" = SDR, "Standard Discount Factor" = SDF,
+disc_download_raw = reactive({
+
+  disc_download$rawindex <- cbind(disc_standard0, disc_health0[2:3])
+  disc_download$rawindex <- disc_download$rawindex %>% rename("Standard Discount Rate" = SDR, "Standard Discount Factor" = SDF,
                              "Health Discount Rate" = HDR, "Health Discount Factor" = HDF)
-rownames(disc_download_raw) <- disc_standard0$Year
+
+  disc_download$rawvector <- 0*disc_download$rawindex[,ncol(disc_download$rawindex)]
+  disc_download$rawcombine <- c(disc_download$date, sub(0, "", disc_download$rawvector))
+  
+  disc_download_raw = rbind(disc_download$rawindex, disc_download$rawcombine)
+
+  rownames(disc_download_raw) <- c(disc_standard0$Year, "Timestamp")
+
+  disc_download_raw
+
+})
 
 # Download full data (inputs, outputs, and original discount rate index)
 output$disc_download <- downloadHandler(
@@ -786,7 +829,7 @@ output$disc_download <- downloadHandler(
     paste("DASD Indexation Tool - Discount Rate - USER - ", Sys.Date(), '.csv', sep = '')
   },
   content = function(con) {
-    write.csv(disc_download_df(), con)
+    write.csv(disc_download_select(), con)
   }
 )
 
@@ -796,7 +839,7 @@ output$disc_downloadraw <- downloadHandler(
     paste("DASD Indexation Tool - Discount Rate - RAW - ", Sys.Date(), '.csv', sep = '')
   },
   content = function(con) {
-    write.csv(disc_download_raw, con, row.names = FALSE)
+    write.csv(disc_download_raw(), con, row.names = FALSE)
   }
 )
 
