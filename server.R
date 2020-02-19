@@ -9,6 +9,8 @@
 
 library(shiny)
 library(shinyWidgets)
+library(shinyjs)
+library(shinycssloaders)
 
 source("./idx.R")
 
@@ -19,8 +21,24 @@ shinyServer(function(session, input, output) {
   
 # All variables pre-fixed with 'i_' to prevent duplication with other outputs
   
+  # Disable inputs if Guidance tab is open; !is.null required to disable uiOutput correctly  
+  observe({
+    if((input$i_tabs == 'Guidance') & !is.null(input$i_base)) {
+        disable("i_indices")
+        disable("i_period")
+        disable("i_base")
+        disable("i_download")
+    }
+    else {
+        enable("i_indices")
+        enable("i_period")
+        enable("i_base")
+        enable("i_download")
+    }
+  })
+  
 # Creates variable to that aligns with the app's default settings (i.e. prevents loading errors)
-  i_chosenindex = reactiveValues(rownames = rownames(index_obr_qtr), data = index_obr_qtr)
+  i_chosenindex = reactiveValues(rownames = rownames(index_obr_fy), data = index_obr_fy)
   i_shift = reactiveValues()
   
 # Ensures correct dataframe is chosen for future use, based on user input
@@ -151,6 +169,30 @@ shinyServer(function(session, input, output) {
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DEFLATOR CALCULATOR: INPUT | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   
 # All variables pre-fixed with 'def_' to prevent duplication with other outputs
+  
+  # Disable inputs if Guidance tab is open; !is.null required to disable uiOutput correctly  
+  observe({
+    if((input$def_tabs == 'Guidance') & !is.null(input$def_fromto)) {
+        disable("def_indices")
+        disable("def_realnom")
+        disable("def_fromto")
+        disable("def_period")
+        disable("def_slider")
+        disable("def_inputrows")
+        disable("def_pchange")
+        disable("def_download")
+    }
+    else {
+        enable("def_indices")
+        enable("def_realnom")
+        enable("def_fromto")
+        enable("def_period")
+        enable("def_slider")
+        enable("def_inputrows")
+        enable("def_pchange")
+        enable("def_download")
+    }
+  })
   
   # Creates variable to that aligns with the app's default settings (i.e. prevents loading errors)
   def_chosenindex = reactiveValues(rownames = rownames(index_obr_fy), data = index_obr_fy)
@@ -488,6 +530,26 @@ disc_h0 <- data.frame("Year" = 0, "HDR" = 0, "HDF" = 1)
   
 # All variables pre-fixed with 'disc_' to prevent duplication with other outputs
   
+  # Disable inputs if Guidance tab is open; !is.null required to disable uiOutput correctly
+  observe({
+    if((input$disc_tabs == 'Guidance') & !is.null(input$disc_periodstart) & !is.null(input$disc_periodend)) {
+        disable("disc_rate")
+        disable("disc_period")
+        disable("disc_periodstart")
+        disable("disc_periodend")
+        disable("disc_inputrows")
+        disable("disc_download")
+    }
+    else {
+        enable("disc_rate")
+        enable("disc_period")
+        enable("disc_periodstart")
+        enable("disc_periodend")
+        enable("disc_inputrows")
+        enable("disc_download")
+    }
+  })
+  
 # Creates variable to that aligns with the app's default settings (i.e. prevents loading errors)
 disc_chosen = reactiveValues()
 
@@ -505,52 +567,91 @@ observeEvent(input$disc_rate, {
 })
 
 
-# Generates Period Start/End Date inputs
-disc_storedperiod = reactiveValues(start = year_now, end = year_now + 10)
+# Generates correct slider options in defcalc user interface, based on user input
+# Read carefully before making changes. Splitting prevents re-rendering errors/resets.
 
-output$disc_periodstart = renderUI({
-  if (input$disc_period == "Basic") {
-    numericInput(inputId = "disc_periodstart", label = "Period Start",
-                 value = 1, min = 1, max = 1)
-  } else
+# Generates starting positions for each period
+observeEvent({input$disc_period
+              #input$disc_update
+              }, {
+
+  output$disc_periodstart <- renderUI({
+    
+                if (input$disc_period == "Basic") {
+                  numericInput(inputId = "disc_periodstart", label = "Start Period",
+                                  value = 1, min = 1, max = 1)
+                 } else if (input$disc_period == "Calendar Year") {
+                   numericInput(inputId = "disc_periodstart", label = "Start Period",
+                                   value = year_now
+                                   , step = 1)
+                 } else if (input$disc_period == "Financial Year") {
+                   textInput(inputId = "disc_periodstart", label = "Start Period",
+                             value = paste0(year_now - 1, "/", str_sub(year_now, -2, -1)))
+                 }
+  })
+  
+  output$disc_periodend <- renderUI({
+    
+                if (input$disc_period == "Basic") {
+                  numericInput(inputId = "disc_periodend", label = "End Period",
+                                value = 10, min = 2, max = 125)
+                 } else if (input$disc_period == "Calendar Year") {
+                   numericInput(inputId = "disc_periodend", label = "End Period",
+                                value = year_now + 10, 
+                                step = 1)
+                 } else if (input$disc_period == "Financial Year") {
+                  textInput(inputId = "disc_periodend", label = "End Period",
+                            value = paste0(year_now + 9, "/", str_sub(year_now + 10, -2, -1)))
+                }
+  })
+
+}, ignoreInit = FALSE)
+
+# Generates new min/max positions for each period, if applicable.
+observeEvent({
+              input$disc_periodstart
+              input$disc_periodend
+              #input$disc_update
+              }, {
+  
   if (input$disc_period == "Calendar Year") {
-    numericInput(inputId = "disc_periodstart", label = "Period Start",
-                 value = disc_storedperiod$start, max = disc_storedperiod$end - 1, step = 1)
+    updateNumericInput(session = session, inputId = "disc_periodstart",
+                        value = NULL,
+                        max = input$disc_periodend - 1, step = 1)
+    
+    updateNumericInput(session = session, inputId = "disc_periodend",
+                        value = NULL,
+                        min = input$disc_periodstart + 1, max = input$disc_periodstart + 125, step = 1)
   }
-})
-
-output$disc_periodend = renderUI({
-  if (input$disc_period == "Basic") {
-    numericInput(inputId = "disc_periodend", label = "Period End",
-                 value = 10, min = 2, max = 125, step = 1)
-  } else
-    if (input$disc_period == "Calendar Year") {
-      numericInput(inputId = "disc_periodend", label = "Period End",
-                   value = disc_storedperiod$end, min = disc_storedperiod$start + 1, max = disc_storedperiod$start + 125, step = 1)
-    }
-})
+}, ignoreInit = TRUE)    
 
 
 # Generates column headers for table
 disc_chosen$columns = list() 
 
 observeEvent({input$disc_period
-              input$disc_periodstart
-              input$disc_periodend}, {
+              #input$disc_periodstart
+              #input$disc_periodend
+              input$disc_update
+              }, {
+                
+                # Delay required to allow switching between periods without app crashing
+                delay(250, {
                 
   if ((input$disc_period == "Basic") | (input$disc_period == "Calendar Year")) {
-    disc_chosen$collength <- as.numeric(input$disc_periodend) - as.numeric(input$disc_periodstart) + 1
+    disc_chosen$collength <- (as.numeric(input$disc_periodend) - as.numeric(input$disc_periodstart)) + 1
     for (p in 1:disc_chosen$collength) {
         disc_chosen$columns[[p]] <- as.numeric(input$disc_periodstart) - 1 + p
     }
   } else if (input$disc_period == "Financial Year") {
-      disc_chosen$collength <- as.numeric(str_sub(as.numeric(input$disc_periodend), 1, 4))
-                                          - as.numeric(str_sub(as.numeric(input$disc_periodend), 1, 4))
+      disc_chosen$collength <- (as.numeric(str_sub(input$disc_periodend, 1, 4)) - as.numeric(str_sub(input$disc_periodstart, 1, 4))) + 1
       for (p in 1:disc_chosen$collength) {
         disc_chosen$columns[[p]] <- paste0(as.numeric(str_sub(input$disc_periodstart, 1, 4)) - 1 + p, "/",
                                             as.numeric(str_sub(input$disc_periodstart, -2, -1)) - 1 + p)
       }
-    }
+  }
+                  
+                })
 })
 
 # Creates variables necessary to generate input table
@@ -559,20 +660,27 @@ disc_data = reactiveValues()
 
 observeEvent({input$disc_inputrows
               input$disc_period
-              input$disc_periodstart
-              input$disc_periodend}, {
+              #input$disc_periodstart
+              #input$disc_periodend
+              input$disc_update
+              }, {
+                
+                # Delay required to allow switching changing start/end periods without app crashing
+                delay(500, {
               
-  if (is.null(disc_values_input[["disc_data$df_input_default"]])) {
-              disc_data$df_input_default = as.data.frame(matrix(0, nrow = input$disc_inputrows, ncol = disc_chosen$collength))
+  if (is.null(disc_values_input[["disc_data$df_input"]])) {
+              disc_data$df_input = as.data.frame(matrix(0, nrow = input$disc_inputrows, ncol = disc_chosen$collength))
                   
-  } else { disc_data$df_input_default = disc_values_input[["disc_data$df_input_default"]]
-    }
+  } else { disc_data$df_input = disc_values_input[["disc_data$df_input"]]
+  }
+                  
+                })
                         
 })
 
 # Produces input table
 output$disc_hot <- renderRHandsontable({
-  disc_df_input = disc_data$df_input_default
+  disc_df_input = disc_data$df_input
   if (!is.null(disc_df_input)){
     rhandsontable(disc_df_input, col_highlight = 2,
                   useTypes = TRUE, stretchH = "all", colHeaders = unlist(list(disc_chosen$columns))) %>% hot_cols(renderer = 
@@ -592,10 +700,18 @@ output$disc_hot <- renderRHandsontable({
 # Generates user output table layout
 disc_data_output = reactive({
   
+  if ((!is.null(input$disc_hot)) & !is.null(disc_chosen$collength)) {
+  
   disc_df_out = hot_to_r(input$disc_hot)
   
-  disc_df_output = as.data.frame(mapply('*', disc_df_out, disc_chosen$factor[, 1:disc_chosen$collength]))
+  disc_data_output = as.data.frame(mapply('*', disc_df_out, disc_chosen$factor[, 1:disc_chosen$collength]))
   
+  }
+  
+})
+
+observe({
+  print(disc_data_output())
 })
 
 # Produces output table
@@ -603,10 +719,10 @@ output$disc_cold <- renderRHandsontable({
   disc_df_output = disc_data_output()
   if (!is.null(disc_df_output)) {
     rhandsontable(disc_df_output, 
-                  useTypes = TRUE, stretchH = "all", colHeaders = unlist(list(disc_chosen$columns)), readOnly = TRUE) %>% hot_cols(renderer = 
+                  useTypes = TRUE, stretchH = "all", colHeaders = unlist(list(disc_chosen$columns))) %>% hot_cols(renderer = 
                   "function(instance, td, row, col, prop, value, cellProperties) {
-                  Handsontable.renderers.NumericRenderer.apply(this, arguments); if(value == 0.00){
-                  td.style.color = 'rgb(235, 235, 235)'; td.style.background = 'white'; } else if (value != 0) {td.style.color = 'black';}
+                  Handsontable.renderers.NumericRenderer.apply(this, arguments); if(value == 0 ){
+                  td.style.color = 'rgb(235, 235, 235)'; td.style.background = 'white'} else if (value != 0) {td.style.color = 'black';} 
                   }")
   }
 })
@@ -622,7 +738,8 @@ observeEvent({input$disc_inputrows
               input$disc_period
               input$disc_periodend
               input$disc_periodstart
-              input$disc_rate}, {
+              input$disc_rate
+              input$disc_update}, {
                 
   # Generate rownames              
   disc_download$inputrows <- 1:input$disc_inputrows
@@ -641,7 +758,7 @@ disc_download_df = reactive({
   # Actual data frames
   disc_download$input = hot_to_r(input$disc_hot)
   disc_download$output = hot_to_r(input$disc_cold)
-  disc_download$factor = disc_chosen$factor
+  disc_download$factor = disc_chosen$factor[, 1:ncol(disc_download$input)]
   
   # Generate one-dimensional data.frame for date to be same length
   disc_download$oned <- 0*disc_download$factor[, 2:length(disc_download$factor)]
