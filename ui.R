@@ -27,7 +27,7 @@ tabPanel("Guidance",
           mainPanel(
             h1("Version", style = "font-weight: bold; font-family: Arial, Helvetica, sans-serif; border-bottom:1px solid black"),
             p("This version of the DASD Indexation Tool is using data published by the Office for Budget Responsibility (OBR) in the following publication:",tags$a(updatefilename, href= updateweblink, target="_blank"),".", style = "margin-left: 1em"),
-            htmlTemplate("www/HTMLTEST.html"), width = 12
+            htmlTemplate("www/MainPage.html"), width = 12
           )
 ),
 
@@ -45,13 +45,13 @@ tabPanel("Indices",
         selectInput(inputId = "i_period", label = "Period Reference", choices = c("Financial Year", "Calendar Year", "Quarterly")),
         uiOutput("i_base"),
         downloadButton("i_download", label = "Download Displayed Data"),
-        downloadButton("i_downloadall", label = "Download Full Raw Data")
+        downloadButton("i_downloadall", label = "Download Raw Data")
       ),
       mainPanel(
         tabsetPanel(id = "i_tabs", type = "tabs",
           # Guidance tab          
           tabPanel("Guidance",
-            p("Placeholder")
+                   htmlTemplate("www/IndicesTool.html"), width = 12
           ),
           # Indices table
           tabPanel("Tool",
@@ -99,7 +99,7 @@ tabPanel("Indexation Calculator",
         tabsetPanel(id = "def_tabs", type = "tabs",
           # Guidance tab          
           tabPanel("Guidance",
-            p("Placeholder")
+                   htmlTemplate("www/IndexationTool.html"), width = 12
           ),          
           # Input tab for user data
           tabPanel("Input",
@@ -147,7 +147,7 @@ tabPanel("Discount Calculator",
         tabsetPanel(id = "disc_tabs", type = "tabs",
           # Guidance tab          
           tabPanel("Guidance",
-            p("Placeholder")
+                   htmlTemplate("www/DiscountingTool.html"), width = 12
           ),                  
           # Input tab for user data
           tabPanel("Input",
