@@ -212,20 +212,24 @@ shinyServer(function(session, input, output) {
         disable("def_realnom")
         disable("def_fromto")
         disable("def_period")
-        disable("def_slider")
+        disable("def_periodstart")
+        disable("def_periodend")
         disable("def_inputrows")
         disable("def_pchange")
         disable("def_download")
+        disable("def_update")
     }
     else {
         enable("def_indices")
         enable("def_realnom")
         enable("def_fromto")
         enable("def_period")
-        enable("def_slider")
+        enable("def_periodstart")
+        enable("def_periodend")
         enable("def_inputrows")
         enable("def_pchange")
         enable("def_download")
+        enable("def_update")
     }
   })
   
@@ -237,76 +241,163 @@ shinyServer(function(session, input, output) {
       if (input$def_period == "Quarterly") {
       def_chosenindex$data = index_obr_qtr
       def_chosenindex$rownames = rownames(index_obr_qtr)
+      def_chosenindex$nrows = nrow(def_chosenindex$data)
     } else if (input$def_period == "Calendar Year") {
       def_chosenindex$data = index_obr_pa
       def_chosenindex$rownames = rownames(index_obr_pa)
+      def_chosenindex$nrows = nrow(def_chosenindex$data)
     } else if (input$def_period == "Financial Year") {
       def_chosenindex$data = index_obr_fy
       def_chosenindex$rownames = rownames(index_obr_fy)
+      def_chosenindex$nrows = nrow(def_chosenindex$data)
     } else {
       def_chosenindex$data = index_obr_all
       def_chosenindex$rownames = rownames(index_obr_all)
+      def_chosenindex$nrows = nrow(def_chosenindex$data)
     }
       
   })
-
-  # Generates correct slider options in defcalc user interface, based on user input
-    observeEvent(input$def_period, {
-    updateSliderTextInput(session = session, inputId = "def_slider",
-                           choices = def_chosenindex$rownames, selected = def_chosenindex$rownames[c(1, nrow(def_chosenindex$data))])
-    }, ignoreInit = TRUE)
 
   # Generates the correct periods to display in table ('if' statement prevents app crashing before UI loads)
-  startrow = reactiveValues()
-  endrow = reactiveValues()
+  # Generates starting positions for each period
   
-  observeEvent({input$def_slider
-                }, {
+  observeEvent({input$def_period
+    #input$def_update
+  }, {
     
-    if(!is.null(input$def_slider[1]) & !is.null(input$def_slider[2])) {
+    output$def_periodstart <- renderUI({
       
-      startrow$dc = which(def_chosenindex$rownames == input$def_slider[1])
-      endrow$dc = which(def_chosenindex$rownames == input$def_slider[2])
+      if (input$def_period == "Quarterly") {
+        textInput(inputId = "def_periodstart", label = "Start Period",
+                     value = paste0(year_now - 1, "Q1"))
+      } else if (input$def_period == "Calendar Year") {
+        numericInput(inputId = "def_periodstart", label = "Start Period",
+                     value = year_now
+                     , step = 1)
+      } else if (input$def_period == "Financial Year") {
+        textInput(inputId = "def_periodstart", label = "Start Period",
+                  value = paste0(year_now - 1, "/", str_sub(year_now, -2, -1)))
+      }
       
-      def_chosenindex$inputperiods = def_chosenindex$rownames[startrow$dc:endrow$dc]
-      
-    } else { def_chosenindex$inputperiods = def_chosenindex$rownames }                 
+    })
     
-    output$def_fromto <- renderUI({
-      if (input$def_realnom == "Real to Nominal") {
-        selectInput(inputId = "def_fromto", label = "Convert From (Base-year):", choices = c(def_chosenindex$inputperiods))
-      } else { selectInput(inputId = "def_fromto", label = "Convert To (Base-year):", choices = c(def_chosenindex$inputperiods))
+    output$def_periodend <- renderUI({
+      
+      if (input$def_period == "Quarterly") {
+        textInput(inputId = "def_periodend", label = "End Period",
+                     value = paste0(year_now + 3, "Q4"))
+      } else if (input$def_period == "Calendar Year") {
+        numericInput(inputId = "def_periodend", label = "End Period",
+                     value = year_now + 5, 
+                     step = 1)
+      } else if (input$def_period == "Financial Year") {
+        textInput(inputId = "def_periodend", label = "End Period",
+                  value = paste0(year_now + 4, "/", str_sub(year_now + 5, -2, -1)))
+      }
+      
+    })
+    
+  }, ignoreInit = FALSE)
+  
+  # Generates new min/max positions for each period, if applicable.
+  observeEvent({
+    input$def_periodstart
+    input$def_periodend
+    #input$def_update
+  }, {
+    
+    if (input$disc_period == "Calendar Year") {
+      updateNumericInput(session = session, inputId = "disc_periodstart",
+                         value = NULL,
+                         max = input$disc_periodend - 1, step = 1)
+      
+      updateNumericInput(session = session, inputId = "disc_periodend",
+                         value = NULL,
+                         min = input$disc_periodstart + 1, step = 1)
+    }
+  }, ignoreInit = TRUE)
+  
+  # Creates correct options for use in real/nominal options, and column headers
+  def_chosen = reactiveValues()
+  def_chosen$columns = list() 
+  
+  observeEvent({input$def_period
+    #input$def_periodstart
+    #input$def_periodend
+    input$def_update
+  }, {
+    
+    # Delay required to allow switching between periods without app crashing
+    delay(250, {
+      
+      if (input$def_period == "Calendar Year") {
+          def_chosen$columns <- paste0(
+                                      rep(input$def_periodstart:input$def_periodend, each = 1)
+                                )
+          
+        def_chosen$columns <- def_chosen$columns[(which(def_chosen$columns == input$def_periodstart)):(which(def_chosen$columns==input$def_periodend))]
+        def_chosen$collength <- length(def_chosen$columns)
+
+      } else if (input$def_period == "Financial Year") {
+          def_chosen$columns <- paste0(
+                                      rep(as.numeric(str_sub(input$def_periodstart, 1, 4)):as.numeric(str_sub(input$def_periodend, 1, 4)), each = 1),
+                                      "/",
+                                      rep(as.numeric(str_sub(input$def_periodstart, -2, -1)):as.numeric(str_sub(input$def_periodend, -2, -1)), each = 1)
+                                )
+        def_chosen$columns <- def_chosen$columns[(which(def_chosen$columns == input$def_periodstart)):(which(def_chosen$columns==input$def_periodend))]
+        def_chosen$collength <- length(def_chosen$columns)
+
+      } else if (input$def_period == "Quarterly") {
+        def_chosen$columns <- paste0(
+                                rep(as.numeric(str_sub(input$def_periodstart, 1, 4)):as.numeric(str_sub(input$def_periodend, 1, 4)), each = 4),
+                                "Q",
+                                rep(1:4, length = 4)
+                              )
+        def_chosen$columns <- def_chosen$columns[(which(def_chosen$columns == input$def_periodstart)):(which(def_chosen$columns==input$def_periodend))]
+        def_chosen$collength <- length(def_chosen$columns)
       }
     })
-                  
-  })
-  
-  # Creates variables necessary for input table
-  def_values_input = reactiveValues()
-  def_data = reactiveValues()
-  
-  # Generates the basic input table...
-  observeEvent({input$def_inputrows
-                input$def_slider
-                }, {
+})
+    
+    # Generates correct Real/Nominal option for input              
+    output$def_fromto <- renderUI({
+      if (input$def_realnom == "Real to Nominal") {
+        selectInput(inputId = "def_fromto", label = "Convert From (Base-year):", choices = c(def_chosenindex$rownames))
+      } else { selectInput(inputId = "def_fromto", label = "Convert To (Base-year):", choices = c(def_chosenindex$rownames))
+      }
+    })
 
-    if (is.null(def_values_input[["def_data$df_input_default"]])) {
-      def_data$df_input_default = as.data.frame(matrix(0, nrow = input$def_inputrows, ncol = length(def_chosenindex$inputperiods)))
-        
-    } else {
-      def_data$df_input_default = def_values_input[["def_data$df_input_default"]]
+# Generates the basic input table...
+def_values_input = reactiveValues()
+def_data = reactiveValues()
+
+observeEvent({input$def_inputrows
+  input$def_period
+  #input$def_periodstart
+  #input$def_periodend
+  input$def_update
+}, {
+  
+  # Delay required to allow switching changing start/end periods without app crashing
+  delay(500, {
+    
+    if (is.null(def_values_input[["def_data$df_input"]])) {
+      def_data$df_input = as.data.frame(matrix(0, nrow = input$def_inputrows, ncol = def_chosen$collength))
+      
+    } else { def_data$df_input = def_values_input[["def_data$df_input"]]
     }
     
-    def_data$df_input_default
+    def_data$df_input
     
   })
+})
   
   # Produces input table
   output$def_hot <- renderRHandsontable({
-    def_df_input = def_data$df_input_default
+    def_df_input = def_data$df_input
     if (!is.null(def_df_input)){
       rhandsontable(def_df_input, col_highlight = 2,
-                    useTypes = TRUE, stretchH = "all", colHeaders = unlist(list(def_chosenindex$inputperiods))) %>% hot_cols(renderer = 
+                    useTypes = TRUE, stretchH = "all", colHeaders = unlist(list(def_chosen$columns))) %>% hot_cols(renderer = 
                     "function(instance, td, row, col, prop, value, cellProperties) {
                     Handsontable.renderers.NumericRenderer.apply(this, arguments); if(value == 0 ){
                     td.style.color = 'rgb(235, 235, 235)'; td.style.background = 'white'} else if (value != 0) {td.style.color = 'black';} 
@@ -328,28 +419,61 @@ shinyServer(function(session, input, output) {
     observeEvent({input$def_fromto
                   input$def_indices
                   input$def_realnom
-                  input$def_slider
                   input$def_period
+                  input$def_update
                   }, {
+                    
+      delay(500,{              
                     
       if(!is.null(def_chosenindex$rownames)){
    
       def_shift = ifelse(input$def_indices == "None", 1, 8)
         
-      # Finding the relevant base index and:
-   
-      def_base_value <- def_chosenindex$data[input$def_fromto, which(colnames(def_chosenindex$data) == input$def_indices) + def_shift]
-   
+      # Finding the relevant index:
       def_chosenindex$mutate <- def_chosenindex$data[, which(colnames(def_chosenindex$data) == input$def_indices) + def_shift]
+      def_chosenindex$yoy <- def_chosenindex$data[, which(colnames(def_chosenindex$data) == input$def_indices)]
+      
+      # Adding additional rows to mutated index if input period extends beyond selection
+      if ((input$def_period == "Calendar Year") | (input$def_period == "Financial Year")) {
+      def_chosenindex$newrows <- as.numeric(str_sub(input$def_periodend, 1, 4)) - as.numeric(str_sub(def_chosenindex$rownames[def_chosenindex$nrows], 1, 4))
+      } else if (input$def_period == "Quarterly") {
+        def_chosenindex$newyears <- 4*(as.numeric(str_sub(input$def_periodend, 1, 4)) - as.numeric(str_sub(def_chosenindex$rownames[def_chosenindex$nrows], 1, 4)))
+        def_chosenindex$newquarters <- as.numeric(str_sub(input$def_periodend, -1)) - as.numeric(str_sub(def_chosenindex$rownames[def_chosenindex$nrows], -1))
+        def_chosenindex$newrows <- def_chosenindex$newyears + def_chosenindex$newquarters
+      }
+      
+      if (def_chosenindex$newrows > 0) {
+        
+      def_chosenindex$addrows <- list()
+      def_chosenindex$addrownames <- list()
+      
+      for (d in 1:def_chosenindex$newrows) {
+        if ((input$def_period == "Calendar Year") | (input$def_period == "Financial Year")) {
+        def_chosenindex$addrows[d] = def_chosenindex$mutate[length(def_chosenindex$mutate)]*((1+(def_chosenindex$yoy[length(def_chosenindex$mutate)]/100))^d)
+      } else if (input$def_period == "Quarterly") {
+        for (q in 1:4) {
+        def_chosenindex$addrows <- c(def_chosenindex$addrows, def_chosenindex$mutate[(length(def_chosenindex$mutate)-4+q)]*((1+(def_chosenindex$yoy[(length(def_chosenindex$mutate)-4+q)]/100))^ceiling(d/4)))
+        }
+        }
+      }
+      
+      def_chosenindex$addrownames <- def_chosen$columns %>% subset((def_chosen$columns %in% def_chosenindex$rownames) == FALSE)
+      
+      def_chosenindex$mutate = c(def_chosenindex$mutate, unlist(def_chosenindex$addrows))
+      def_chosenindex$rownames = unique(c(def_chosenindex$rownames, unlist(def_chosenindex$addrownames)))
+      
+      }
+      
+      # Finding the correct base year in the index
+      def_base_value <- def_chosenindex$mutate[which(def_chosenindex$rownames == input$def_fromto)]
       
       # Converting input values to output values 
-      ifelse(input$def_realnom == "Real to Nominal",
-              (def_chosenindex$final <- def_chosenindex$mutate / def_base_value),
-              (def_chosenindex$final <- def_base_value / def_chosenindex$mutate))
+      if (input$def_realnom == "Real to Nominal") {
+              (def_chosenindex$final <- def_chosenindex$mutate / def_base_value)
+      } else {(def_chosenindex$final <- def_base_value / def_chosenindex$mutate)}
       
       # Transmuting the dataframe
       def_chosenindex$final = t(def_chosenindex$final)
-      def_chosenindex$final
       def_chosenindex$colnumber <- which(def_chosenindex$inputperiods == input$def_fromto)
     
       # Creates clear rownames for output download option
@@ -361,22 +485,25 @@ shinyServer(function(session, input, output) {
       # Length of def_download$rownames must equal length of def_download_df (see below) else download error
       def_download$rownames <- unlist(rbind(list(def_download$inputrows), list(def_download$outputrows), def_download$indexname, "Timestamp"))
       
-    }
-                    })
+      }
+      })
+    })
   
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DEFLATOR CALCULATOR: DEFLATOR SELECT | END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
   
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DEFLATOR CALCULATOR: OUTPUT | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   
 # All variables pre-fixed with 'def_' to prevent duplication with other outputs
-
+    
   # Generates user output table layout
   def_data_output = reactive({
       
       def_df_out = hot_to_r(input$def_hot)
       
-      def_df_output = as.data.frame(mapply('*', def_df_out, def_chosenindex$final[,startrow$dc:endrow$dc]))
-  
+      def_df_output = as.data.frame(mapply('*', def_df_out, def_chosenindex$final[,
+                                                                                  which(def_chosenindex$rownames==input$def_periodstart):
+                                                                                  which(def_chosenindex$rownames==input$def_periodend)]))
+      
  })
   
   # Produces output table
@@ -384,7 +511,7 @@ shinyServer(function(session, input, output) {
     def_df_output = def_data_output()
     if (!is.null(def_df_output)) {
       rhandsontable(def_df_output, 
-                    useTypes = TRUE, stretchH = "all", colHeaders = unlist(list(def_chosenindex$inputperiods)), readOnly = TRUE) %>% hot_cols(renderer = 
+                    useTypes = TRUE, stretchH = "all", colHeaders = unlist(list(def_chosen$columns)), readOnly = TRUE) %>% hot_cols(renderer = 
                     "function(instance, td, row, col, prop, value, cellProperties) {
                     Handsontable.renderers.NumericRenderer.apply(this, arguments); if(value == 0.00){
                     td.style.color = 'rgb(235, 235, 235)'; td.style.background = 'white'; } else if (value != 0) {td.style.color = 'black';}
@@ -398,16 +525,18 @@ shinyServer(function(session, input, output) {
   
   def_download_df = reactive({
     
-    def_download$vector <- 0*def_chosenindex$final[, startrow$dc:(endrow$dc-1)]
+    def_download$vector <- 0*def_chosenindex$final[, which(def_chosenindex$rownames==input$def_periodstart):
+                                                     (which(def_chosenindex$rownames==input$def_periodend)-1)]
     def_download$combine <- t(matrix(c(def_download$date, sub(0, "", def_download$vector))))
     
     def_download$input = hot_to_r(input$def_hot)
     def_download$output = hot_to_r(input$def_cold)
-    def_download$index = def_chosenindex$final[, startrow$dc:endrow$dc]
+    def_download$index = def_chosenindex$final[, which(def_chosenindex$rownames==input$def_periodstart):
+                                                 which(def_chosenindex$rownames==input$def_periodend)]
   
     def_download_df = rbind(def_download$input, def_download$output, def_download$index, def_download$combine)
     
-    colnames(def_download_df) <- def_chosenindex$inputperiods
+    colnames(def_download_df) <- def_chosen$columns
     
     rownames(def_download_df) <- def_download$rownames
       
@@ -471,7 +600,7 @@ shinyServer(function(session, input, output) {
     def_df_output_pc = def_data_output_pc()
     if (!is.null(def_df_output_pc)) {
       rhandsontable(def_df_output_pc, 
-                    useTypes = TRUE, stretchH = "all", colHeaders = unlist(list(def_chosenindex$inputperiods)), readOnly = TRUE) %>% hot_cols(format = "0.0%", renderer = 
+                    useTypes = TRUE, stretchH = "all", colHeaders = unlist(list(def_chosen$columns)), readOnly = TRUE) %>% hot_cols(format = "0.0%", renderer = 
                     "function(instance, td, row, col, prop, value, cellProperties) {
                     Handsontable.renderers.NumericRenderer.apply(this, arguments); if(value == 0.00){
                     td.style.color = 'rgb(235, 235, 235)'; td.style.background = 'white'; } else if (value != 0) {td.style.color = 'black';}
@@ -574,6 +703,7 @@ disc_h0 <- data.frame("Year" = 0, "HDR" = 0, "HDF" = 1)
         disable("disc_periodend")
         disable("disc_inputrows")
         disable("disc_download")
+        disable("disc_update")
     }
     else {
         enable("disc_rate")
@@ -582,6 +712,7 @@ disc_h0 <- data.frame("Year" = 0, "HDR" = 0, "HDF" = 1)
         enable("disc_periodend")
         enable("disc_inputrows")
         enable("disc_download")
+        enable("disc_update")
     }
   })
   

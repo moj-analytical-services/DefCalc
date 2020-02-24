@@ -42,7 +42,7 @@ tabPanel("Indices",
       sidebarPanel(
         # Dropdown menus: indices = different indices available; period = frequency of data; baseyear = chosen base year
         selectInput(inputId = "i_indices", label = "Index", choices = colnames(index_options)),
-        selectInput(inputId = "i_period", label = "Period Reference", choices = c("Financial Year", "Quarterly", "Calendar Year")),
+        selectInput(inputId = "i_period", label = "Period Reference", choices = c("Financial Year", "Calendar Year", "Quarterly")),
         uiOutput("i_base"),
         downloadButton("i_download", label = "Download Displayed Data"),
         downloadButton("i_downloadall", label = "Download Full Raw Data")
@@ -67,18 +67,18 @@ tabPanel("Indices",
                 
 # All variables pre-fixed with 'def_' to prevent duplication with other outputs                
                 
-tabPanel("Deflator Calculator",
+tabPanel("Indexation Calculator",
          
       sidebarPanel(
       # Dropdown menus:
         selectInput(inputId = "def_indices", label = "Index", choices = colnames(index_options), selected = "GDP deflator"),
-        selectInput(inputId = "def_realnom", label = "Conversion: Real/Nominal", choices = c("Real to Nominal", "Nominal to Real")),
+        selectInput(inputId = "def_realnom", label = "Conversion: Real/Nominal", choices = c("Nominal to Real", "Real to Nominal")),
         uiOutput("def_fromto"),
         conditionalPanel(
           condition = "input.def_tabs == 'Input' || input.def_tabs == 'Guidance'",
-            selectInput(inputId = "def_period", label = "Period Reference", choices = c("Financial Year","Quarterly", "Calendar Year")),
-            sliderTextInput(inputId = "def_slider", label = "Selected Time Period Range",
-                            choices = rownames(index_obr_fy), selected = rownames(index_obr_fy)[c(1, nrow(index_obr_fy))]),
+            selectInput(inputId = "def_period", label = "Period Reference", choices = c("Financial Year", "Calendar Year", "Quarterly")),
+            uiOutput("def_periodstart"),
+            uiOutput("def_periodend"),
             numericInput(inputId = "def_inputrows", label = "Number of Required Rows", value = 10, min = 1, step = 1)
         ),
         conditionalPanel(
@@ -86,8 +86,12 @@ tabPanel("Deflator Calculator",
             selectInput(inputId = "def_pchange", label = "Percentage Change", choices = c("Base-to-period", "Period-to-period"))
         ),
         conditionalPanel(
+          condition = "input.def_tabs == 'Input' || input.def_tabs == 'Guidance'",
+            actionButton(inputId = "def_update", label = "Update Table")
+        ),
+        conditionalPanel(
           condition = "input.def_tabs == 'Output' || input.def_tabs == 'Guidance'",
-          downloadButton("def_download", label = "Download Results")
+            downloadButton("def_download", label = "Download Results")
         )
     ),
                          
