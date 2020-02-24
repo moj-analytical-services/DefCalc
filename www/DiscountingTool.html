@@ -1,0 +1,120 @@
+<html>
+
+<head>
+<style type="text/css">
+.inline {
+  background-color: #f7f7f7;
+  border:solid 1px #B0B0B0;
+}
+.error {
+	font-weight: bold;
+	color: #FF0000;
+}
+.warning {
+	font-weight: bold;
+}
+.message {
+	font-style: italic;
+}
+.source, .output, .warning, .error, .message {
+	padding: 0 1em;
+  border:solid 1px #F7F7F7;
+}
+.source {
+  background-color: #f5f5f5;
+}
+.left {
+  text-align: left;
+}
+.right {
+  text-align: right;
+}
+.center {
+  text-align: center;
+}
+.hl.num {
+  color: #AF0F91;
+}
+.hl.str {
+  color: #317ECC;
+}
+.hl.com {
+  color: #AD95AF;
+  font-style: italic;
+}
+.hl.opt {
+  color: #000000;
+}
+.hl.std {
+  color: #585858;
+}
+.hl.kwa {
+  color: #295F94;
+  font-weight: bold;
+}
+.hl.kwb {
+  color: #B05A65;
+}
+.hl.kwc {
+  color: #55aa55;
+}
+.hl.kwd {
+  color: #BC5A65;
+  font-weight: bold;
+}
+</style>
+<title>Guidance</title>
+</head>
+
+<body style="font-family: Arial, Helvetica, sans-serif">
+
+<h1 style="border-bottom:1px solid black"><b>Guidance</b></h1>
+
+<h3><b>Purpose</b></h3>
+
+<p><b>This tool is designed to:</b></p>
+<p><li>Inflate (and deflate) financial values to generate an estimate of required future (or current equivalent) expenditure, utilising a range of user-input controls.</li></p>
+<p><li>Convert between nominal and real financial values, and to rebase real values from one time period to another.</li></p>
+<p><li>Estimate the real or nominal percentage changes for each period relative to a base-year (or the previous period).</li></p>
+
+
+<h3><b>Background</b></h3>
+
+<p><li>Discounting accounts for the theory that individuals have a propensity to prefer to have £1 today, rather than slightly more at some point in the future.  This is due to:</li></p>
+    <p style = "margin-left: 1em">a. Pure time preferences: there is a propensity for individuals to prefer income in the present rather than in the future (i.e. individuals are impatient, and over-value income at present / under-value future income because they are able to better value the benefits).</p>							
+    <p style = "margin-left: 1em">b. Wealth effect: there is the assumption that individuals will be wealthier in the future, so that £1 at present is worth relatively more than it would be in the future.</p>
+    <p style = "margin-left: 1em">c. For example, people may be assumed to prefer to have £1.00 today rather than £1.02 in a year's time, even if £1.02 is worth more in real terms.</li></p>													
+
+
+<h3><b>User Guidance</b></h3>
+
+<p><li><b>User Parameters:</b></li></p>
+    <p style = "margin-left: 1em">- Input Table: Input, either manually or copy-paste from a compatable spreadsheet (Ctrl + C, CTRL + V), financial values into the input table. Only cells with values will be converted (e.g. to inflate £100 from 2010 onwards, £100 must be entered from 2010 onwards).</p>
+    <p style = "margin-left: 1em">- Discount Rate: select a discount rate. Recommendation is to use Standard, unless dealing with values related to health/risk-to-life (then Health is appropriate).</p>
+    <p style = "margin-left: 1em">- Period Reference: select the period reference of interest (financial year, calendar year, or quarterly).</p>
+    <p style = "margin-left: 1em">- Start Period: provide the relevant first period to display. This will not affect the outputs; it only aids visual interpretation. Note this cannot be set before 2008.</p>
+    <p style = "margin-left: 1em">- End Period: provide the relevant final period to display. This will not affect the outputs; it only aids visual interpretation.</p>
+    <p style = "margin-left: 1em">- Number of Required Rows: Number input. Note that arbitrarily large numbers may cause lagged responses or crash the application.</p>
+    <p style = "margin-left: 1em">- Update Table: when parameters are set up, this button will generate an updated table.</p>
+    <p style = "margin-left: 1em">- Download Discount Rates: download the discount rate tables used in the tool.</p>
+    <p style = "margin-left: 1em">- Download Results: download output results, tailored to user-selected parameters.</p>
+    
+
+<p><li><b>Interpretation:</b></li></p>
+    <p style = "margin-left: 1em">- Output Table: displays the converted results of the input table, based on the user parameters.</p>
+
+    
+<p><li><b>Reporting Results:</b></li></p>
+    <p style = "margin-left: 1em">- Be explicit in reporting which index is used.</p>
+    <p style = "margin-left: 1em">- Real/Nominal conversions: be explicit in the years that are converted to/from.</p>
+    <p style = "margin-left: 1em">- Re-basing: be explicit in which year(s) that are converting from, and which year is the new base year.</p>
+    <p style = "margin-left: 1em">- For example: [these values] are nominal prices. They were inflated, from 20XX prices; or [these other values] are real prices. They were deflated, and are measured in 20XX prices.</p>
+    
+<p><li><b>Download Options:</b></li></p>
+    <p style = "margin-left: 1em">- Download Results: displays the input table, followed by the output table, and then the conversion factor used.</p>
+
+														
+<div> </div>
+
+</body>
+</html>
