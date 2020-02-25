@@ -584,7 +584,7 @@ observeEvent({input$def_inputrows
 
     if(input$def_pchange == "Base-to-period"){
     
-        (def_df_output_pc = as.data.frame(pc(def_df_out_pc, def_df_out_pc[, which(def_chosenindex$inputperiods == input$def_fromto)])))} 
+        (def_df_output_pc = as.data.frame(pc(def_df_out_pc, def_df_out_pc[, which(def_chosenindex$rownames == input$def_fromto)])))} 
     
       else {
         
