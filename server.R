@@ -722,13 +722,13 @@ disc_chosen = reactiveValues()
 #  Chooses which discount rate to use (Standard, or Health)
 observeEvent(input$disc_rate, {
   if (input$disc_rate == "Standard") {
-    disc_chosen$year = as.data.frame(t(disc_standard$Year))
-    disc_chosen$rate = as.data.frame(t(disc_standard$SDR))
-    disc_chosen$factor = as.data.frame(t(disc_standard$SDF))
+    disc_chosen$year = as.data.frame(t(disc_standard0$Year))
+    disc_chosen$rate = as.data.frame(t(disc_standard0$SDR))
+    disc_chosen$factor = as.data.frame(t(disc_standard0$SDF))
   } else {
-        disc_chosen$year = as.data.frame(t(disc_health$Year))
-        disc_chosen$rate = as.data.frame(t(disc_health$HDR))
-        disc_chosen$factor = as.data.frame(t(disc_health$HDF))
+        disc_chosen$year = as.data.frame(t(disc_health0$Year))
+        disc_chosen$rate = as.data.frame(t(disc_health0$HDR))
+        disc_chosen$factor = as.data.frame(t(disc_health0$HDF))
   }
 })
 
