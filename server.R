@@ -927,7 +927,7 @@ disc_download_select = reactive({
   disc_download$datematrix <- t(matrix(c(disc_download$date, sub(0, "", disc_download$oned))))
   
   # Data frames combined, and named
-  disc_download_df = rbind(disc_download$input, disc_download$output, disc_download$factor, disc_download$datematrix)
+  disc_download_select = rbind(disc_download$input, disc_download$output, disc_download$factor, disc_download$datematrix)
   
   colnames(disc_download_select) <- disc_chosen$columns
   rownames(disc_download_select) <- disc_download$rownames
