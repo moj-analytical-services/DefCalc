@@ -637,6 +637,12 @@ RemoteUsername: dreamRs
 RemoteRef: master
 RemoteSha: 02bb84e4a2eb45b3b422af084a61b2e9b4415cec
 
+Package: shinycssloaders
+Source: CRAN
+Version: 0.3
+Hash: c7b0a1144db60669980a3e99d7a64dca
+Requires: digest, glue, shiny
+
 Package: shinyjs
 Source: CRAN
 Version: 1.0
