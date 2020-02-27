@@ -23,18 +23,22 @@ index_obr_all <- s3_path_to_full_df("alpha-app-defcalc/obr_all.csv")
 index_obr_all <- data.frame(index_obr_all, row.names = 1)
 index_obr_all$yoy_None <- 0
 index_obr_all$index_None <- 100
+
 index_obr_qtr <- s3_path_to_full_df("alpha-app-defcalc/obr_qtr.csv")
 index_obr_qtr <- data.frame(index_obr_qtr, row.names = 1)
 index_obr_qtr$yoy_None <- 0
 index_obr_qtr$index_None <- 100
+
 index_obr_pa <- s3_path_to_full_df("alpha-app-defcalc/obr_pa.csv")
 index_obr_pa <- data.frame(index_obr_pa, row.names = 1)
 index_obr_pa$yoy_None <- 0
 index_obr_pa$index_None <- 100
+
 index_obr_fy <- s3_path_to_full_df("alpha-app-defcalc/obr_fy.csv")
 index_obr_fy <- data.frame(index_obr_fy, row.names = 1)
 index_obr_fy$yoy_None <- 0
 index_obr_fy$index_None <- 100
+
 latest_url_csv <- s3_path_to_full_df("alpha-app-defcalc/latest_url.csv")
 latest_url_csv <- data.frame(latest_url_csv, row.names = 1)
 
@@ -46,6 +50,7 @@ latest_url_csv$filename <- gsub(".xlsx","",latest_url_csv$filename)
 updatefilename <- ifelse(length(latest_url_csv$filename[latest_url_csv$updatereq == 1]) == 0,
                          latest_url_csv$filename[latest_url_csv$s3 == 1 & latest_url_csv$latest == 1],
                          latest_url_csv$filename[latest_url_csv$updatereq == 1])
+
 updateweblink <- ifelse(length(latest_url_csv$weblink[latest_url_csv$updatereq == 1]) == 0,
                         latest_url_csv$weblink[latest_url_csv$s3 == 1 & latest_url_csv$latest == 1],
                         latest_url_csv$weblink[latest_url_csv$updatereq == 1])
@@ -53,6 +58,7 @@ updateweblink <- ifelse(length(latest_url_csv$weblink[latest_url_csv$updatereq =
 # Selects index drop down options needed for UI (i.e. removes duplicates)
 index_options <- index_obr_all %>% select(starts_with("yoy_"))
 colnames(index_options) <- substring(colnames(index_options), 5)
+
 # Replace '.' with blank space in column names, for UI aesthetic purposes
 colnames(index_options) <- str_replace_all(colnames(index_options), "[.]", " ")
 
@@ -155,30 +161,7 @@ fcst_fy <- list()
 # Combine all forecast periods into one list
 year_known <- c(known_pa, known_qtr, known_fy)
 year_forecast <- c(fcst_pa, fcst_qtr, fcst_fy)
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ FORECAST PERIODS | END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DISCOUNT PERIODS | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-# Generate list of basic discount periods (1 to 125)
-disc_basic <- list()
-  for (bas in c(1:125)) {
-    disc_basic[[bas]] <- bas
-  }
-
-# Generate list of calendar year discount periods (T-5 to T+150)
 year_now <- as.integer(format(Sys.Date(), "%Y"))
 
-disc_calendar <- list()
-  for (cal in c(1:145)) {
-    disc_calendar[[cal]] <- year_now - 6 + cal
-  }
-
-# Generate list of financial year discount periods (T-5 to T+150)
-disc_financial <- list()
-  for (fin in c(1:145)) {
-    disc_financial[[fin]] <- paste0(year_now - 6 + fin, "/", str_sub((year_now - 5 + fin), -2, -1))
-  }
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DISCOUNT PERIODS | END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ FORECAST PERIODS | END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
