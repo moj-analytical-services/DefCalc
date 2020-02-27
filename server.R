@@ -257,6 +257,52 @@ shinyServer(function(session, input, output) {
     }
       
   })
+  
+  # Checks that inputs are valid, else disables table update
+  observeEvent({
+                input$def_period
+                input$def_periodstart
+                input$def_periodend
+                }
+               , {
+                 
+    if ({
+        !is.null(input$def_periodstart) &
+        !is.null(input$def_periodend) &
+        as.numeric(str_sub(input$def_periodstart, 1, 4)) >= as.numeric(str_sub(rownames(def_chosenindex$data)[1], 1, 4)) &
+        as.numeric(str_sub(input$def_periodend, 1, 4)) > as.numeric(str_sub(input$def_periodstart, 1, 4))
+        }) {
+        if ({
+          input$def_period == "Calendar Year"
+          }) {
+          enable("def_update")
+        } else if ({
+          input$def_period == "Quarterly" &
+          grepl(pattern = 'Q', input$def_periodstart, ignore.case = TRUE) &
+          grepl(pattern = 'Q', input$def_periodend, ignore.case = TRUE) &
+          as.numeric(nchar(input$def_periodstart)) - as.numeric(str_locate(input$def_periodstart, pattern = 'Q'))[1] == 1 &
+          as.numeric(nchar(input$def_periodend)) - as.numeric(str_locate(input$def_periodend, pattern = 'Q'))[1] == 1 &
+          as.numeric(str_sub(input$def_periodstart, -1)) <= 4 &
+          as.numeric(str_sub(input$def_periodend, -1)) <= 4
+        }) {
+        enable("def_update")
+        } else if ({
+          input$def_period == "Financial Year" &
+          grepl(pattern = '/', input$def_periodstart) &
+          grepl(pattern = '/', input$def_periodend) &
+          as.numeric(nchar(input$def_periodstart)) - as.numeric(str_locate(input$def_periodstart, pattern = '/'))[1] == 2 &
+          as.numeric(nchar(input$def_periodend)) - as.numeric(str_locate(input$def_periodend, pattern = '/'))[1] == 2 &
+          as.numeric(str_sub(input$def_periodstart, -2, -1)) - as.numeric(str_sub(input$def_periodstart, 3, 4)) == 1 &
+          as.numeric(str_sub(input$def_periodend, -2, -1)) - as.numeric(str_sub(input$def_periodend, 3, 4)) == 1 
+        }) {
+          enable("def_update")
+        } else {
+          disable("def_update")
+        }
+      } else {
+      disable("def_update")
+    }
+    })
 
   # Generates the correct periods to display in table ('if' statement prevents app crashing before UI loads)
   # Generates starting positions for each period
@@ -307,13 +353,13 @@ shinyServer(function(session, input, output) {
   }, {
     
     if (input$disc_period == "Calendar Year") {
-      updateNumericInput(session = session, inputId = "disc_periodstart",
+      updateNumericInput(session = session, inputId = "def_periodstart",
                          value = NULL,
-                         max = input$disc_periodend - 1, step = 1)
+                         max = input$def_periodend - 1, step = 1)
       
-      updateNumericInput(session = session, inputId = "disc_periodend",
+      updateNumericInput(session = session, inputId = "def_periodend",
                          value = NULL,
-                         min = input$disc_periodstart + 1, step = 1)
+                         min = input$def_periodstart + 1, step = 1)
     }
   }, ignoreInit = TRUE)
   
@@ -390,6 +436,13 @@ observeEvent({input$def_inputrows
     def_data$df_input
     
   })
+})
+
+# Generates table at start
+observe({
+  if(input$def_tabs == 'Input') {
+    click("def_update")
+  }
 })
   
   # Produces input table
@@ -590,9 +643,10 @@ observeEvent({input$def_inputrows
         
         (def_df_output_pc = as.data.frame(pc(def_df_out_pc, def_df_out_pc_lag)))
         
-        def_df_output_pc[is.na(def_df_output_pc)] <- 0
-        
-            }
+      }
+    
+    def_df_output_pc
+    
       })
   
   # Produce percentage change output table
@@ -732,7 +786,6 @@ observeEvent(input$disc_rate, {
   }
 })
 
-
 # Generates correct slider options in defcalc user interface, based on user input
 # Read carefully before making changes. Splitting prevents re-rendering errors/resets.
 
@@ -789,8 +842,41 @@ observeEvent({
                         value = NULL,
                         min = input$disc_periodstart + 1, max = input$disc_periodstart + 125, step = 1)
   }
-}, ignoreInit = TRUE)    
+}, ignoreInit = TRUE)
 
+# Disable table generation if invalid inputs
+observeEvent({
+              input$disc_period
+              input$disc_periodstart
+              input$disc_periodend
+              }, {
+  
+  if ({
+      !is.null(input$disc_periodstart) &
+      !is.null(input$disc_periodend)
+      }) {             
+  if ({
+      input$disc_period == "Financial Year" &
+      grepl(pattern = '/', input$disc_periodstart) &
+      grepl(pattern = '/', input$disc_periodend) &
+      as.numeric(nchar(input$disc_periodstart)) - as.numeric(str_locate(input$disc_periodstart, pattern = '/'))[1] == 2 &
+      as.numeric(nchar(input$disc_periodend)) - as.numeric(str_locate(input$disc_periodend, pattern = '/'))[1] == 2 &
+      as.numeric(str_sub(input$disc_periodstart, -2, -1)) - as.numeric(str_sub(input$disc_periodstart, 3, 4)) == 1 &
+      as.numeric(str_sub(input$disc_periodend, -2, -1)) - as.numeric(str_sub(input$disc_periodend, 3, 4)) == 1 
+      }) {
+      enable("disc_update")
+      } else if ({
+        input$disc_periodend > input$disc_periodstart &
+        (input$disc_period == "Basic" | input$disc_period == "Calendar Year")
+      }) {
+        enable("disc_update")
+      } else {
+        disable("disc_update")
+      }
+  } else {
+    disable("disc_update")
+  }
+})
 
 # Generates column headers for table
 disc_chosen$columns = list() 
@@ -842,6 +928,13 @@ observeEvent({input$disc_inputrows
                   
                 })
                         
+})
+
+# Generates table at start
+observe({
+  if(input$disc_tabs == 'Input') {
+    click("disc_update")
+  }
 })
 
 # Produces input table
