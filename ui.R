@@ -26,7 +26,11 @@ ui = fluidPage(
 tabPanel("Guidance",
           mainPanel(
             h1("Version", style = "font-weight: bold; font-family: Arial, Helvetica, sans-serif; border-bottom:1px solid black"),
-            p("This version of the DASD Indexation Tool is using data published by the Office for Budget Responsibility (OBR) in the following publication:",tags$a(updatefilename, href= updateweblink, target="_blank"),".", style = "margin-left: 1em"),
+            p("This version of the DASD Indexation Tool is using data published by the Office for Budget Responsibility (OBR) in the following publication:",
+              tags$a(updatefilename, href= updateweblink, target="_blank"),
+              ".",
+              style = "margin-left: 1em"
+              ),
             htmlTemplate("www/MainPage.html"), width = 12
           )
 ),
@@ -160,7 +164,6 @@ tabPanel("Discount Calculator",
         )
       )
 )
-
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DISCOUNTING CALCULATOR | END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
