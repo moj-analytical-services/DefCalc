@@ -80,7 +80,11 @@ observeEvent({
   
 # Generates correct base period dropdown menu in indices user interface, based on user input
 output$i_base <- renderUI({
-  selectInput(inputId = "i_base", label = "Base Period", choices = c("Default", i_chosenindex$rownames))
+  
+  selectInput(inputId = "i_base", label = "Base Period",
+              choices = c("Default", i_chosenindex$rownames)
+              )
+  
 })
   
 # Rebases chosen index, and then creates a variable to use in output table, and creates display table
@@ -92,14 +96,28 @@ observe({
   if ({
       !is.null(input$i_base)
       })
-    {
+      {
       # Creates base_value to convert all values with for re-basing; equals 100 if 'Default' base selected (to not-affect index)
-      i_shift = ifelse(input$i_indices == "None", 1, ncol(i_chosenindex$data)/2) 
+      i_shift = if ({
+                    input$i_indices == "None"
+                    })
+                    {
+                      1
+                    }
+                    else {
+                      (ncol(i_chosenindex$data)/2) - 1
+                    }
       
-      base_value <- ifelse(input$i_base == "Default",
-                           100,
-                           index_obr_all[input$i_base, which(colnames(i_chosenindex$data) == input$i_indices) + i_shift]
-                          )
+      base_value <- if ({
+                        input$i_base == "Default"
+                        })
+                        {
+                          100
+                        }
+                        else {
+                          index_obr_all[input$i_base,
+                                        which(colnames(i_chosenindex$data) == input$i_indices) + i_shift]
+                        }
       
       # Mutates index (i.e. re-bases it)
       i_chosenindex$mutate = i_chosenindex$data %>%
@@ -115,28 +133,49 @@ observe({
         # Creates flag columns for use in output table ('|' is the R 'or' function, '&' is the 'and' function):
         
         # Is the base year, and not forecast ('round()' required for 'Default' option)
-        mutate(is_base = ifelse(
-          !grepl(paste(year_forecast, collapse ="|"), Period)
-          & ((round(Index, digits = 2)) == 100),
-          1, 0)
-        ) %>%
+        mutate(is_base = ifelse ({
+                                !grepl(paste(year_forecast, collapse ="|"), Period) &
+                                (round(Index, digits = 2)) == 100
+                                }
+                                ,
+                                  1
+                                ,
+                                  0
+                                )
+              ) %>%
         
         # Is forecast, but not base year
-        mutate(is_forecast = ifelse(
-          grepl(paste(year_forecast, collapse ="|"), Period) 
-          & ((round(Index, digits = 2)) != 100),
-          1, 0)
-        ) %>%
+        mutate(is_forecast = ifelse ({
+                                    grepl(paste(year_forecast, collapse ="|"), Period) &
+                                    (round(Index, digits = 2)) != 100
+                                    }
+                                    ,
+                                      1
+                                    ,
+                                      0
+                                    )
+              ) %>%
         
         # Is base year and forecast
-        mutate(is_forecast_base = ifelse(
-          grepl(paste(year_forecast, collapse ="|"), Period)
-          & ((round(Index, digits = 0)) == 100),
-          1, 0)
-        ) %>%
-        
+        mutate(is_forecast_base = ifelse ({
+                                          grepl(paste(year_forecast, collapse ="|"), Period) &
+                                          (round(Index, digits = 0)) == 100
+                                          }
+                                          ,
+                                            1
+                                          ,
+                                            0
+                                          )
+              ) %>%
+      
         # Selects columns for output table
-        select("Period", "Index", "YoY (%)", "is_base", "is_forecast", "is_forecast_base")
+        select("Period",
+               "Index",
+               "YoY (%)",
+               "is_base",
+               "is_forecast",
+               "is_forecast_base"
+               )
     
       # Produces output table,
       output$i_indextable <- DT::renderDT({
@@ -149,23 +188,40 @@ observe({
                   
         ) %>%
           # Formats table to display 2 digits rather than all
-          formatRound(columns = c(2), digits = 2) %>%
-          formatRound(columns = c(3), digits = 2) %>%
+          formatRound(columns = c(2),
+                      digits = 2
+                      ) %>%
+          formatRound(columns = c(3),
+                      digits = 2
+                      ) %>%
           
           # Aligns output values to provide readable formatting
-          formatStyle(columns = c(2:3), 'text-align' = 'right') %>%
+          formatStyle(columns = c(2:3),
+                      'text-align' = 'right'
+                      ) %>%
           
           # Highlights row which is Base Period
-          formatStyle(columns = "is_base", target = 'row',
-                      backgroundColor = styleEqual(c('1'), c('lightBlue'))) %>%
+          formatStyle(columns = "is_base",
+                      target = 'row',
+                      backgroundColor = styleEqual(c('1'),
+                                                   c('lightBlue'))
+                      ) %>%
           # Highlights rows which are forecasts
-          formatStyle(columns = "is_forecast", target = 'row',
-                      backgroundColor = styleEqual(c('1'), c('lightYellow'))) %>%
+          formatStyle(columns = "is_forecast",
+                      target = 'row',
+                      backgroundColor = styleEqual(c('1'), 
+                                                   c('lightYellow'))
+                      ) %>%
           # Highlights row which is base and forecast (if applicable)
-          formatStyle(columns = "is_forecast_base", target = 'row',
-                      backgroundColor = styleEqual(c('1'), c('lightGreen')))
+          formatStyle(columns = "is_forecast_base",
+                      target = 'row',
+                      backgroundColor = styleEqual(c('1'), 
+                                                   c('lightGreen'))
+                      )
       })
-    }
+      
+  }
+  
 })
   
 # Dataframe for download of indices
@@ -331,6 +387,7 @@ observeEvent({
               }, {
                  
   if ({
+      input$def_tabs != "Guidance" &
       !is.null(input$def_periodstart) &
       !is.null(input$def_periodend) &
       as.numeric(str_sub(input$def_periodstart, 1, 4)) >= as.numeric(str_sub(rownames(def_chosenindex$data)[1], 1, 4)) &
@@ -532,12 +589,42 @@ output$def_fromto <- renderUI({
       }) 
       {
         selectInput(inputId = "def_fromto", label = "Convert From (Base-year):",
-                    choices = c(def_chosenindex$rownames)
+                    choices = c(def_chosenindex$rownames),
+                    selected = if ({
+                                  input$def_period == "Calendar"
+                                  })
+                                  {
+                                    yearknown[nchar(year_known)==4]
+                                  }
+                                  else if ({
+                                  input$def_period == "Financial Year"
+                                  })
+                                  {
+                                    year_known[grepl(pattern = '/', year_known)]
+                                  }
+                                  else {
+                                    year_known[grepl(pattern = 'Q', year_known)]
+                                  }
                     )
-      } 
+      }
       else { 
         selectInput(inputId = "def_fromto", label = "Convert To (Base-year):",
-                    choices = c(def_chosenindex$rownames)
+                    choices = c(def_chosenindex$rownames),
+                    selected = if ({
+                                  input$def_period == "Calendar"
+                                  })
+                                  {
+                                    yearknown[nchar(year_known)==4]
+                                  }
+                                  else if ({
+                                  input$def_period == "Financial Year"
+                                  })
+                                  {
+                                    year_known[grepl(pattern = '/', year_known)]
+                                  }
+                                  else {
+                                    year_known[grepl(pattern = 'Q', year_known)]
+                                  }
                     )
       }
 })
@@ -559,7 +646,9 @@ observeEvent({
         is.null(def_values_input[["def_data$df_input"]])
         }) 
         {
-          def_data$df_input = as.data.frame(matrix(0, nrow = input$def_inputrows, ncol = def_chosen$collength))
+          def_data$df_input = as.data.frame(matrix(0,
+                                                   nrow = input$def_inputrows,
+                                                   ncol = def_chosen$collength))
         }
         else {
           def_data$df_input = def_values_input[["def_data$df_input"]]
@@ -628,7 +717,15 @@ observeEvent({
         !is.null(def_chosenindex$rownames)
         })
         {
-          def_shift = ifelse(input$def_indices == "None", 1, 8)
+          def_shift = if({
+                        input$def_indices == "None"
+                        })
+                        {
+                          1
+                        }
+                        else {
+                          8
+                        }  
         
           # Finding the relevant index:
           def_chosenindex$mutate <- def_chosenindex$data[, which(colnames(def_chosenindex$data) == input$def_indices) + def_shift]
@@ -753,37 +850,36 @@ output$def_cold <- renderRHandsontable({
 })
   
 # Produce dataframe that combines input, output and deflator index
-def_download = reactive({
-  
-# Creates clear rownames for output download option
-def_download$inputrows <- 1:input$def_inputrows
-def_download$inputrows <- paste('Input', def_download$inputrows, sep = ' ')
-def_download$outputrows <- 1:input$def_inputrows
-def_download$outputrows <- paste('Output', def_download$outputrows, sep = ' ')
-def_download$indexname <- input$def_indices
+def_download = reactiveValues()
 
-# Length of def_download$rownames must equal length of def_download_df (see below) else download error
-def_download$rownames <- unlist(
-                                rbind(list(def_download$inputrows),
-                                      list(def_download$outputrows),
-                                      def_download$indexname,
-                                      "Timestamp"
-                                      )
-                                )
-# Generates timestamp for download options  
-def_download$date <- paste("This spreadsheet was downloaded using the DASD Indexation Tool on",
-                            Sys.Date(), 
-                            "at", 
-                            sub("(.*-.*-.*) ","", Sys.time()),
-                            "using OBR",
-                            updatefilename,
-                            sep = " ")
-
-})
-
-# Generates the download table  
 def_download_df = reactive({
-    
+  
+  # Creates clear rownames for output download option
+  def_download$inputrows <- 1:input$def_inputrows
+  def_download$inputrows <- paste('Input', def_download$inputrows, sep = ' ')
+  def_download$outputrows <- 1:input$def_inputrows
+  def_download$outputrows <- paste('Output', def_download$outputrows, sep = ' ')
+  def_download$indexname <- input$def_indices
+
+  # Length of def_download$rownames must equal length of def_download_df (see below) else download error
+  def_download$rownames <- unlist(
+                                  rbind(list(def_download$inputrows),
+                                        list(def_download$outputrows),
+                                        def_download$indexname,
+                                        "Timestamp"
+                                        )
+                                  )
+  # Generates timestamp for download options  
+  def_download$date <- paste("This spreadsheet was downloaded using the DASD Indexation Tool on",
+                              Sys.Date(), 
+                              "at", 
+                              sub("(.*-.*-.*) ","", Sys.time()),
+                              "using OBR",
+                              updatefilename,
+                              sep = " "
+                             )
+
+  # Generates the download table  
   def_download$vector <- 0*def_chosenindex$final[,
                                                   which(def_chosenindex$rownames==input$def_periodstart):
                                                   (which(def_chosenindex$rownames==input$def_periodend)-1)]
@@ -834,7 +930,15 @@ observeEvent({
               input$def_fromto
               }, {
         
-  change = ifelse(input$def_fromto == "Real to Nominal", "Nominal", "Real")
+  change = if({
+              input$def_fromto == "Real to Nominal"
+              })
+              {
+                "Nominal"
+              }
+              else {
+                "Real"
+              }  
     
 })
   
@@ -1129,6 +1233,7 @@ observeEvent({
               }, {
   
   if ({
+      input$disc_tabs != "Guidance" &
       !is.null(input$disc_periodstart) &
       !is.null(input$disc_periodend)
       })
@@ -1432,3 +1537,4 @@ output$disc_downloadraw <- downloadHandler(
 session$allowReconnect(TRUE)
     
 })
+
