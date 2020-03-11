@@ -18,26 +18,26 @@ index_obr_raw <- readWorkbook("obr_raw.xlsx", sheet = "Raw", colNames = TRUE)
 index_obr_raw <- index_obr_raw %>% replace(., is.na(.), "")
 names(index_obr_raw)[2:ncol(index_obr_raw)] <- ""
 
-# Download cleaned OBR data .csv, and re-adds rownames
+# Download cleaned OBR data .csv, re-adds rownames, and adds 'do-nothing' index
 index_obr_all <- s3_path_to_full_df("alpha-app-defcalc/obr_all.csv")
 index_obr_all <- data.frame(index_obr_all, row.names = 1)
-index_obr_all$yoy_None <- 0
-index_obr_all$index_None <- 100
+index_obr_all <- add_column(index_obr_all, "yoy_None" = 0, .after = ncol(index_obr_all)/2)
+index_obr_all <- add_column(index_obr_all, "index_None" = 100, .after = ncol(index_obr_all))
 
 index_obr_qtr <- s3_path_to_full_df("alpha-app-defcalc/obr_qtr.csv")
 index_obr_qtr <- data.frame(index_obr_qtr, row.names = 1)
-index_obr_qtr$yoy_None <- 0
-index_obr_qtr$index_None <- 100
+index_obr_qtr <- add_column(index_obr_qtr, "yoy_None" = 0, .after = ncol(index_obr_qtr)/2)
+index_obr_qtr <- add_column(index_obr_qtr, "index_None" = 100, .after = ncol(index_obr_qtr))
 
 index_obr_pa <- s3_path_to_full_df("alpha-app-defcalc/obr_pa.csv")
 index_obr_pa <- data.frame(index_obr_pa, row.names = 1)
-index_obr_pa$yoy_None <- 0
-index_obr_pa$index_None <- 100
+index_obr_pa <- add_column(index_obr_pa, "yoy_None" = 0, .after = ncol(index_obr_pa)/2)
+index_obr_pa <- add_column(index_obr_pa, "index_None" = 100, .after = ncol(index_obr_pa))
 
 index_obr_fy <- s3_path_to_full_df("alpha-app-defcalc/obr_fy.csv")
 index_obr_fy <- data.frame(index_obr_fy, row.names = 1)
-index_obr_fy$yoy_None <- 0
-index_obr_fy$index_None <- 100
+index_obr_fy <- add_column(index_obr_fy, "yoy_None" = as.numeric(0), .after = ncol(index_obr_fy)/2)
+index_obr_fy <- add_column(index_obr_fy, "index_None" = as.numeric(100), .after = ncol(index_obr_fy))
 
 latest_url_csv <- s3_path_to_full_df("alpha-app-defcalc/latest_url.csv")
 latest_url_csv <- data.frame(latest_url_csv, row.names = 1)
@@ -55,7 +55,7 @@ updateweblink <- ifelse(length(latest_url_csv$weblink[latest_url_csv$updatereq =
                         latest_url_csv$weblink[latest_url_csv$s3 == 1 & latest_url_csv$latest == 1],
                         latest_url_csv$weblink[latest_url_csv$updatereq == 1])
 
-# Selects index drop down options needed for UI (i.e. removes duplicates)
+# Selects index drop down options needed for default UI (i.e. removes duplicates)
 index_options <- index_obr_all %>% select(starts_with("yoy_"))
 colnames(index_options) <- substring(colnames(index_options), 5)
 
@@ -75,6 +75,22 @@ colnames(index_obr_pa) <- colnames(index_obr_pa) %>%
 colnames(index_obr_fy) <- colnames(index_obr_fy) %>%
   substring(5) %>%
   str_replace_all("[.]", " ")
+
+# Creates seperated files for index and year-on-year changes
+index_obr_all_yoy <- index_obr_all[, 1:(ncol(index_obr_all)/2)]
+index_obr_all_index <- index_obr_all[, ((ncol(index_obr_all)/2)+1):ncol(index_obr_all)]
+
+index_obr_qtr_yoy <- index_obr_qtr[, 1:(ncol(index_obr_qtr)/2)]
+index_obr_qtr_index <- index_obr_qtr[, ((ncol(index_obr_qtr)/2)+1):ncol(index_obr_qtr)]
+
+index_obr_pa_yoy <- index_obr_pa[, 1:(ncol(index_obr_pa)/2)]
+index_obr_pa_index <- index_obr_pa[, ((ncol(index_obr_pa)/2)+1):ncol(index_obr_pa)]
+
+index_obr_fy_yoy <- index_obr_fy[, 1:(ncol(index_obr_fy)/2)]
+index_obr_fy_index <- index_obr_fy[, ((ncol(index_obr_fy)/2)+1):ncol(index_obr_fy)]
+
+# Create list of period references
+Period_References <- c("Financial Year", "Calendar Year", "Quarterly")
 
 # Remove imported excel file
 file.remove("obr_raw.xlsx")

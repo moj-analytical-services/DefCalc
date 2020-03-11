@@ -45,11 +45,23 @@ tabPanel("Indices",
     
       sidebarPanel(
         # Dropdown menus: indices = different indices available; period = frequency of data; baseyear = chosen base year
-        selectInput(inputId = "i_indices", label = "Index", choices = colnames(index_options)),
-        selectInput(inputId = "i_period", label = "Period Reference", choices = c("Financial Year", "Calendar Year", "Quarterly")),
-        uiOutput("i_base"),
-        downloadButton("i_download", label = "Download Displayed Data"),
-        downloadButton("i_downloadall", label = "Download Raw Data")
+        conditionalPanel(
+          condition = "input.i_tabs == 'Tool' || input.i_tabs == 'Guidance'",
+            selectInput(inputId = "i_indices", label = "Index", choices = colnames(index_options)),
+            selectInput(inputId = "i_period", label = "Period Reference", choices = Period_References),
+            uiOutput("i_base"),
+            downloadButton("i_download", label = "Download Displayed Data"),
+            downloadButton("i_downloadall", label = "Download Raw Data")
+        ),
+        conditionalPanel(
+          condition = "input.i_tabs == 'Add Index'",
+            textInput(inputId = "i_userindex", label = "Index", placeholder = "Provide the index name"),
+            selectInput(inputId = "i_userperiod", label = "Period Reference", choices = c(Period_References)),
+            uiOutput("i_userperiodstart"),
+            uiOutput("i_userperiodend"),
+            actionButton(inputId = "i_userupdate", label = "Generate Table"),
+            actionButton(inputId = "i_useradd", label = "Update Local Index Set"),
+        )
       ),
       mainPanel(
         tabsetPanel(id = "i_tabs", type = "tabs",
@@ -60,9 +72,13 @@ tabPanel("Indices",
           # Indices table
           tabPanel("Tool",
             withSpinner(DTOutput("i_indextable"))
+          ),
+          # User Generated index
+          tabPanel("Add Index",
+            withSpinner(rHandsontableOutput("i_user"))       
+          )
         )
       )
-    )
   ),
                 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ INDICES TABLE | END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -80,7 +96,7 @@ tabPanel("Indexation Calculator",
         uiOutput("def_fromto"),
         conditionalPanel(
           condition = "input.def_tabs == 'Input' || input.def_tabs == 'Guidance'",
-            selectInput(inputId = "def_period", label = "Period Reference", choices = c("Financial Year", "Calendar Year", "Quarterly")),
+            selectInput(inputId = "def_period", label = "Period Reference", choices = c(Period_References)),
             uiOutput("def_periodstart"),
             uiOutput("def_periodend"),
             numericInput(inputId = "def_inputrows", label = "Number of Required Rows", value = 10, min = 1, step = 1)
@@ -91,7 +107,7 @@ tabPanel("Indexation Calculator",
         ),
         conditionalPanel(
           condition = "input.def_tabs == 'Input' || input.def_tabs == 'Guidance'",
-            actionButton(inputId = "def_update", label = "Update Table")
+            actionButton(inputId = "def_update", label = "Generate Table")
         ),
         conditionalPanel(
           condition = "input.def_tabs == 'Output' || input.def_tabs == 'Guidance'",
@@ -112,10 +128,6 @@ tabPanel("Indexation Calculator",
           # Output tab to display transformed data
           tabPanel("Output",
             withSpinner(rHandsontableOutput("def_cold"))
-          ),
-          # Output tab to display transformed data (percentage change)
-          tabPanel("% Change",
-            withSpinner(rHandsontableOutput("def_coldest"))     
           )
         )
       )
@@ -138,7 +150,7 @@ tabPanel("Discount Calculator",
             uiOutput("disc_periodstart"),
             uiOutput("disc_periodend"),
             numericInput(inputId = "disc_inputrows", label = "Number of Required Rows", value = 10, min = 1, step = 1),
-            actionButton(inputId = "disc_update", label = "Update Table")
+            actionButton(inputId = "disc_update", label = "Generate Table")
         ),
         conditionalPanel(
           condition = "input.disc_tabs == 'Output' || input.disc_tabs == 'Guidance'",
