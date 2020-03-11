@@ -17,7 +17,7 @@ source("./idx.R")
 # Server logic required to create output
 shinyServer(function(session, input, output) {
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ INDICES TABLE | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ INDICES TABLE: MAIN | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   
 # All variables pre-fixed with 'i_' to prevent duplication with other outputs
   
@@ -25,8 +25,8 @@ shinyServer(function(session, input, output) {
 observe({
   
   if({
-    input$i_tabs == 'Guidance' & 
-    !is.null(input$i_base)
+    input$i_tabs == 'Guidance' &
+    !is.null(input$i_base)  
     })
     {
       disable("i_indices")
@@ -44,47 +44,96 @@ observe({
 })
   
 # Creates variable to that aligns with the app's default settings (i.e. prevents loading errors)
-i_chosenindex = reactiveValues(rownames = rownames(index_obr_fy), data = index_obr_fy)
+i_chosenindex = reactiveValues(index = index_obr_fy_index,
+                               yoy = index_obr_fy_yoy,
+                               rownames = rownames(index_obr_fy),
+                               indexnames = colnames(index_obr_fy_yoy)
+                               )
   
 # Ensures correct dataframe is chosen for future use, based on user input
-observeEvent({
-              input$i_period
-              }, {
-  
+# Generates starting positions for each index
+index_qtr = reactiveValues(index = index_obr_qtr_index,
+                            yoy = index_obr_qtr_yoy,
+                            rownames = rownames(index_obr_qtr),
+                            indexnames = colnames(index_obr_qtr_yoy)
+                          )
+
+index_pa = reactiveValues(index = index_obr_pa_index,
+                          yoy = index_obr_pa_yoy,
+                          rownames = rownames(index_obr_pa),
+                          indexnames = colnames(index_obr_pa_yoy)
+                          )
+
+index_fy = reactiveValues(index = index_obr_fy_index,
+                          yoy = index_obr_fy_yoy,
+                          rownames = rownames(index_obr_fy),
+                          indexnames = colnames(index_obr_pa_yoy)
+                          )
+
+observe({                
+                
+  # Select the correct period
   if ({
       input$i_period == "Quarterly"
       })
       {
-        i_chosenindex$data = index_obr_qtr
-        i_chosenindex$rownames = rownames(index_obr_qtr)
-      } 
+        i_chosenindex$index = index_qtr$index
+        i_chosenindex$yoy = index_qtr$yoy
+        i_chosenindex$rownames = rownames(index_qtr$index)
+        i_chosenindex$indexnames = index_qtr$indexnames
+      }
       else if ({
-      input$i_period == "Calendar Year"
+      input$i_period == "Calendar Year"  
       })
       {
-        i_chosenindex$data = index_obr_pa
-        i_chosenindex$rownames = rownames(index_obr_pa)
-      } 
+        i_chosenindex$index = index_pa$index
+        i_chosenindex$yoy = index_pa$yoy
+        i_chosenindex$rownames = rownames(index_pa$index)
+        i_chosenindex$indexnames = index_pa$indexnames
+      }
       else if ({
       input$i_period == "Financial Year"
       })
       {
-        i_chosenindex$data = index_obr_fy
-        i_chosenindex$rownames = rownames(index_obr_fy)
-      } 
-      else {
-        i_chosenindex$data = index_obr_all
-        i_chosenindex$rownames = rownames(index_obr_all)
+        i_chosenindex$index = index_fy$index
+        i_chosenindex$yoy = index_fy$yoy
+        i_chosenindex$rownames = rownames(index_fy$index)
+        i_chosenindex$indexnames = index_fy$indexnames
       }
+  
 })
   
 # Generates correct base period dropdown menu in indices user interface, based on user input
 output$i_base <- renderUI({
   
   selectInput(inputId = "i_base", label = "Base Period",
-              choices = c("Default", i_chosenindex$rownames)
+              choices = c("Default", i_chosenindex$rownames[which(!is.na(i_chosenindex$index[, which(input$i_indices == i_chosenindex$indexnames)]))])
               )
   
+})
+
+
+observe({
+  
+  updateSelectInput(session = session, 
+                    inputId = "i_indices",
+                    choices = i_chosenindex$indexnames
+                    )
+  
+})
+
+observe({
+                
+  if ({
+      grepl("User Index:", input$i_indices)
+      })
+      {
+        disable("i_period")
+      }
+      else {
+        enable("i_period")
+      }
+                
 })
   
 # Rebases chosen index, and then creates a variable to use in output table, and creates display table
@@ -98,15 +147,7 @@ observe({
       })
       {
       # Creates base_value to convert all values with for re-basing; equals 100 if 'Default' base selected (to not-affect index)
-      i_shift = if ({
-                    input$i_indices == "None"
-                    })
-                    {
-                      1
-                    }
-                    else {
-                      (ncol(i_chosenindex$data)/2) - 1
-                    }
+      i_shift = which(colnames(i_chosenindex$yoy) == input$i_indices)
       
       base_value <- if ({
                         input$i_base == "Default"
@@ -115,17 +156,17 @@ observe({
                           100
                         }
                         else {
-                          index_obr_all[input$i_base,
-                                        which(colnames(i_chosenindex$data) == input$i_indices) + i_shift]
+                          i_chosenindex$index[which(i_chosenindex$rownames == input$i_base),
+                                              i_shift]
                         }
       
       # Mutates index (i.e. re-bases it)
-      i_chosenindex$mutate = i_chosenindex$data %>%
-        mutate_at(.vars = vars(which(colnames(i_chosenindex$data) == input$i_indices) + i_shift), .funs = ~ 100 * . / base_value) %>%
+      i_chosenindex$mutateindex = i_chosenindex$index %>%
+        mutate_at(.vars = vars(i_shift),
+                  .funs = ~ 100 * . / base_value) %>%
         
-        # Rename 'yoy_' and 'index_' to be constant
-        rename("YoY (%)" = input$i_indices) %>%
-        rename("Index" = which(colnames(i_chosenindex$data) == input$i_indices) + i_shift) %>%
+        # Rename to be constant
+        rename("Index" = i_shift) %>%
         
         # Creates column for periods (e.g. 2008, 2009...)
         mutate(Period = i_chosenindex$rownames) %>%
@@ -166,7 +207,13 @@ observe({
                                           ,
                                             0
                                           )
-              ) %>%
+              )
+      
+      # Renames year-on-year columns
+      i_chosenindex$mutateyoy = i_chosenindex$yoy %>%
+        rename("YoY (%)" = i_shift)
+      
+      i_chosenindex$mutate <- cbind(i_chosenindex$mutateyoy, i_chosenindex$mutateindex) %>%
       
         # Selects columns for output table
         select("Period",
@@ -175,7 +222,9 @@ observe({
                "is_base",
                "is_forecast",
                "is_forecast_base"
-               )
+               ) %>%
+        
+      remove_missing(na.rm = TRUE)
     
       # Produces output table,
       output$i_indextable <- DT::renderDT({
@@ -256,7 +305,7 @@ i_download_select = reactive({
                                    "YoY (%)"
                                    )
   
-  rownames(i_download_select) <- c(i_chosenindex$rownames,
+  rownames(i_download_select) <- c(i_chosenindex$rownames[which(complete.cases(i_chosenindex$index) == TRUE)],
                                    "Timestamp"
                                    )
     
@@ -287,7 +336,7 @@ output$i_download <- downloadHandler(
                         paste("DASD Indexation Tool - Indices - ", input$i_indices, "- ", Sys.Date(), '.csv', sep = '')
                         },
   content = function(con) {
-                          write.csv(i_download_select(), con, row.names = c(i_chosenindex$rownames, "Timestamp"))
+                          write.csv(i_download_select(), con)
                           }
 )
     
@@ -301,7 +350,484 @@ output$i_downloadall <- downloadHandler(
                           }
 )
   
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ INDICES TABLE | END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ INDICES TABLE: MAIN | END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ INDICES TABLE: USER INDEX | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Generates starting positions for each period
+observeEvent({
+            input$i_userperiod
+            }, {
+  
+  output$i_userperiodstart <- renderUI({
+    
+    if ({
+        input$i_userperiod == "Quarterly"
+        }) 
+        {
+          textInput(inputId = "i_userperiodstart", label = "Start Period",
+                    value = paste0(year_now - 1, "Q1")
+                    )
+        }
+        else if ({
+        input$i_userperiod == "Calendar Year"
+        })
+        {
+          numericInput(inputId = "i_userperiodstart", label = "Start Period",
+                       value = year_now,
+                       step = 1
+                      )
+        }
+        else if ({ 
+        input$i_userperiod == "Financial Year"
+        })
+        {
+          textInput(inputId = "i_userperiodstart", label = "Start Period",
+                    value = paste0(year_now - 1, "/", str_sub(year_now, -2, -1))
+                    )
+        }
+    
+  })
+  
+  output$i_userperiodend <- renderUI({
+    
+    if ({
+        input$i_userperiod == "Quarterly"
+        }) 
+        {
+          textInput(inputId = "i_userperiodend", label = "End Period",
+                    value = paste0(year_now + 3, "Q4")
+                    )
+        }
+        else if ({
+        input$i_userperiod == "Calendar Year"
+        })
+        {
+          numericInput(inputId = "i_userperiodend", label = "End Period",
+                       value = year_now + 5, 
+                       step = 1
+                      )
+        }
+        else if ({
+        input$i_userperiod == "Financial Year"
+        })
+        {
+          textInput(inputId = "i_userperiodend", label = "End Period",
+                    value = paste0(year_now + 4, "/", str_sub(year_now + 5, -2, -1))
+                    )
+        }
+    
+  })
+  
+}, ignoreInit = FALSE)
+
+# Generates new min/max positions for each period, if applicable.
+observeEvent({
+            input$i_userperiodstart
+            input$i_userperiodend
+            }, {
+  
+  if ({
+      input$i_userperiod == "Calendar Year"
+      })
+      {
+        updateNumericInput(session = session, inputId = "i_userperiodstart",
+                           value = NULL,
+                           max = input$i_userperiodend - 1, 
+                           step = 1
+                          )
+    
+        updateNumericInput(session = session, inputId = "i_userperiodend",
+                           value = NULL,
+                           min = input$i_userperiodstart + 1, 
+                           step = 1
+                          )
+    }
+  
+}, ignoreInit = TRUE)
+
+# Checks that inputs are valid, else disables table update
+observeEvent({
+  input$i_userperiod
+  input$i_userperiodstart
+  input$i_userperiodend
+}, {
+  
+  if ({
+      input$i_tabs == 'Add Index' &
+      !is.null(input$i_userperiodstart) &
+      !is.null(input$i_userperiodend) &
+      !is.na(as.numeric(str_sub(input$i_userperiodstart, 1, 4))) &
+      !is.na(as.numeric(str_sub(input$i_userperiodend, 1, 4))) &
+      as.numeric(str_sub(input$i_userperiodend, 1, 4)) > as.numeric(str_sub(input$i_userperiodstart, 1, 4))
+  }) {
+    
+    if ({
+      input$i_userperiod == "Calendar Year"
+    })
+    {
+      enable("i_userupdate")
+    } 
+    else if ({
+      input$i_userperiod == "Quarterly" &
+        grepl(pattern = 'Q', input$i_userperiodstart, ignore.case = TRUE) &
+        grepl(pattern = 'Q', input$i_userperiodend, ignore.case = TRUE) &
+        as.numeric(nchar(input$i_userperiodstart)) - as.numeric(str_locate(input$i_userperiodstart, pattern = 'Q'))[1] == 1 &
+        as.numeric(nchar(input$i_userperiodend)) - as.numeric(str_locate(input$i_userperiodend, pattern = 'Q'))[1] == 1 &
+        as.numeric(str_sub(input$i_userperiodstart, -1)) <= 4 &
+        as.numeric(str_sub(input$i_userperiodend, -1)) <= 4
+    }) 
+    {
+      enable("i_userupdate")
+    } 
+    else if ({
+      input$i_userperiod == "Financial Year" &
+        grepl(pattern = '/', input$i_userperiodstart) &
+        grepl(pattern = '/', input$i_userperiodend) &
+        as.numeric(nchar(input$i_userperiodstart)) - as.numeric(str_locate(input$i_userperiodstart, pattern = '/'))[1] == 2 &
+        as.numeric(nchar(input$i_userperiodend)) - as.numeric(str_locate(input$i_userperiodend, pattern = '/'))[1] == 2 &
+        as.numeric(str_sub(input$i_userperiodstart, -2, -1)) - as.numeric(str_sub(input$i_userperiodstart, 3, 4)) == 1 &
+        as.numeric(str_sub(input$i_userperiodend, -2, -1)) - as.numeric(str_sub(input$i_userperiodend, 3, 4)) == 1 
+    }) 
+    {
+      enable("i_userupdate")
+    } 
+    else {
+      disable("i_userupdate")
+    }
+    
+  }
+  else {
+    disable("i_userupdate")
+  }
+})
+
+# Creates the required rows/rownames for dataframe
+i_user = reactiveValues()
+
+observeEvent({
+            input$i_userperiod
+            input$i_userupdate
+            }, {
+  
+  i_user$rows <- list()         
+              
+  # Delay required to allow switching between periods without app crashing
+  delay(250, {
+    
+    if ({
+        input$i_userperiod == "Calendar Year"
+        })
+        {
+          i_user$newrows <- paste0(
+            rep(input$i_userperiodstart:input$i_userperiodend, each = 1)
+            )
+      
+          i_user$rows <- i_user$newrows[(which(i_user$newrows == input$i_userperiodstart)):(which(i_user$newrows==input$i_userperiodend))]
+          i_user$rowlength <- length(i_user$rows)
+      
+        } 
+        else if ({
+        input$i_userperiod == "Financial Year"
+        })
+        {
+          i_user$newrows <- paste0(
+            rep(as.numeric(str_sub(input$i_userperiodstart, 1, 4)):as.numeric(str_sub(input$i_userperiodend, 1, 4)), each = 1),
+            "/",
+            rep(as.numeric(str_sub(input$i_userperiodstart, -2, -1)):as.numeric(str_sub(input$i_userperiodend, -2, -1)), each = 1)
+            )
+          
+          i_user$rows <- i_user$newrows[(which(i_user$newrows == input$i_userperiodstart)):(which(i_user$newrows==input$i_userperiodend))]
+          i_user$rowlength <- length(i_user$rows)
+      
+        } 
+        else if ({
+        input$i_userperiod == "Quarterly"
+        })
+        {
+          i_user$newrows <- paste0(
+            rep(as.numeric(str_sub(input$i_userperiodstart, 1, 4)):as.numeric(str_sub(input$i_userperiodend, 1, 4)), each = 4),
+            "Q",
+            rep(1:4, length = 4)
+            )
+          
+          i_user$rows <- i_user$newrows[(which(i_user$newrows == input$i_userperiodstart)):(which(i_user$newrows == input$i_userperiodend))]
+          i_user$rowlength <- length(i_user$rows)
+        }
+    
+  })
+  
+})
+
+# Creates the basic input table...
+i_values_userinput = reactiveValues()
+i_userdata = reactiveValues()
+
+observeEvent({
+            input$i_userperiod
+            input$i_userupdate
+            }, {
+  
+  # Delay required to allow switching changing start/end periods without app crashing
+  delay(500, {
+    
+    if ({
+      is.null(i_values_userinput[["i_userdata$df_input"]])
+    }) 
+    {
+      i_userdata$df_input = as.data.frame(matrix(0,
+                                               nrow = i_user$rowlength,
+                                               ncol = 2))
+    }
+    else {
+      i_userdata$df_input = i_values_userinput[["i_userdata$df_input"]]
+    }
+    
+    i_userdata$df_input
+    
+  })
+  
+})
+
+# Generates table at start
+observe({
+  
+  if ({
+    input$i_tabs == 'Add Index'
+  })
+  {
+    click("i_userupdate")
+  }
+  
+})
+
+# Produces input table
+output$i_user <- renderRHandsontable({
+  
+  i_df_userinput = i_userdata$df_input
+  
+  if ({
+    !is.null(i_df_userinput)
+  })
+  {
+    rhandsontable(i_df_userinput, col_highlight = 2,
+                  useTypes = TRUE, stretchH = "all",
+                  rowHeaders = unlist(list(i_user$rows)), rowHeaderWidth = 75,
+                  colHeaders = c("Index", "YoY (%)")) %>% 
+                  hot_cols(renderer = 
+                    "function(instance, td, row, col, prop, value, cellProperties) {
+                    Handsontable.renderers.NumericRenderer.apply(this, arguments); if(value == 0 ){
+                    td.style.color = 'rgb(235, 235, 235)'; td.style.background = 'white'} else if (value != 0) {td.style.color = 'black';} 
+                    }"
+                  )
+  }
+  
+})
+
+# Disables option to generate new index if empty table
+observe({
+  
+  req(input$i_user, {
+  
+  if ({
+      all(as.data.frame(hot_to_r(input$i_user))[1] != 0) | all(as.data.frame(hot_to_r(input$i_user))[2] != 0)
+      })
+      {
+        enable("i_useradd")
+      }
+      else {
+        disable("i_useradd")
+      } 
+    
+  })
+  
+})
+
+
+# Generates completed pair of index and year-on-year inflation, if not provided
+i_userbase <- reactiveValues()
+i_df_useroutput <- reactiveValues()
+
+i_addcount = reactiveValues(qtr = 0,
+                            pa = 0,
+                            fy = 0
+                            )
+
+observeEvent({
+            input$i_useradd
+            }, {
+              
+  if ({
+      input$i_userperiod == "Quarterly"
+      })  
+      {
+        i_addcount$qtr = i_addcount$qtr + 1
+      }
+      else if ({
+      input$i_userperiod == "Calendar Year"  
+      })        
+      {
+        i_addcount$pa = i_addcount$pa + 1
+      }
+      else if ({
+      input$i_userperiod == "Financial Year"  
+      })
+      {
+        i_addcount$fy = i_addcount$fy + 1
+      }  
+                          
+  # Identifies starting position
+  i_df_useroutput$all <- as.data.frame(hot_to_r(input$i_user))
+  rownames(i_df_useroutput$all) <- i_user$rows
+  colnames(i_df_useroutput$all) <- c(paste0("x_","User Index: ", input$i_userindex), 
+                                     paste0("User Index: ", input$i_userindex)
+                                     )
+  if ({
+      i_df_useroutput$all[1, 1] == 0
+      })
+      {
+        i_userbase$index = 100
+      }
+      else {
+        i_userbase$index = i_df_useroutput$all[1, 1]
+      }
+  
+  if ({
+      i_df_useroutput$all[1, 2] == 0
+      })
+      {
+        i_userbase$yoy = 0
+      }
+      else {
+        i_userbase$yoy = i_df_useroutput$all[1, 2]
+      }
+  
+  # Create index & year-on-year columns
+  if ({
+      !is.null(input$i_user) &
+      any(i_df_useroutput$all[1] != 0)
+      })
+      {
+        i_df_useroutput$index <- i_df_useroutput$all[1]
+      }
+  
+  if ({
+      !is.null(input$i_user) &
+      any(i_df_useroutput$all[2] != 0)
+      })
+      {
+        i_df_useroutput$yoy <- i_df_useroutput$all[2]
+  }
+  
+  # If missing, generate other column
+  if ({
+      is.null(i_df_useroutput$index) &
+      !is.null(i_df_useroutput$yoy)
+      })
+      {
+        i_df_useroutput$yoy <- as.numeric(unlist(list(i_df_useroutput$yoy)))
+        
+        i_df_useroutput$index <- list()
+        i_df_useroutput$index[1] <- i_userbase$index
+        
+        for (i in 2:i_user$rowlength) {
+          i_df_useroutput$index[i] <- as.numeric(i_df_useroutput$index[i-1])*(1+(i_df_useroutput$yoy[i]/100))
+        }
+      }
+  
+  if ({
+      !is.null(i_df_useroutput$index) &
+      is.null(i_df_useroutput$yoy)
+      })
+      {
+        i_df_useroutput$index <- as.numeric(unlist(list(i_df_useroutput$index)))
+        
+        i_df_useroutput$yoy <- list()
+        i_df_useroutput$yoy[1] <- i_userbase$yoy
+    
+        for (y in 2:i_user$rowlength) {
+          i_df_useroutput$yoy[y] <- (((i_df_useroutput$index[y])/(i_df_useroutput$index[y-1]))-1)*100
+        }
+      }
+  
+  # Create new dataframe for use
+  i_df_useroutput$index <- as.data.frame(unlist(i_df_useroutput$index), row.names = i_user$rows)
+  i_df_useroutput$yoy <- as.data.frame(unlist(i_df_useroutput$yoy), row.names = i_user$rows)
+  colnames(i_df_useroutput$index) <- colnames(i_df_useroutput$all)[1]
+  colnames(i_df_useroutput$yoy) <- colnames(i_df_useroutput$all)[2]
+  
+  # Stores value so changing other variables does not reset added indices
+  if ({
+      input$i_userperiod == "Quarterly"
+    })
+    {
+      index_qtr$index <- merge(index_qtr$index,
+                                   i_df_useroutput$index,
+                                   by = 0,
+                                   all = TRUE
+                                   )
+      
+      index_qtr$yoy <- merge(index_obr_qtr_yoy,
+                                 i_df_useroutput$yoy,
+                                 by = 0,
+                                 all = TRUE
+                                 )
+      
+      index_qtr$rownames <- sort.int(unique(c(index_qtr$rownames, i_user$rows)))
+      index_qtr$indexnames <- colnames(index_qtr$yoy)[2:ncol(index_qtr$yoy)]
+      index_qtr$index <- as.data.frame(index_qtr$index[,2:ncol(index_qtr$index)], row.names = index_qtr$rownames)
+      index_qtr$yoy <- as.data.frame(index_qtr$yoy[,2:ncol(index_qtr$yoy)], row.names = index_qtr$rownames)
+    }  
+    else if ({
+    input$i_userperiod == "Calendar Year"
+    })
+    {
+      index_pa$index <- merge(index_pa$index,
+                                   i_df_useroutput$index,
+                                   by = 0,
+                                   all = TRUE
+                                    )
+      
+      index_pa$yoy <- merge(index_pa$yoy,
+                                 i_df_useroutput$yoy,
+                                 by = 0,
+                                 all = TRUE
+                                  )
+      
+      index_pa$rownames <- sort.int(unique(c(index_pa$rownames, i_user$rows)))
+      index_pa$indexnames <- colnames(index_pa$yoy)[2:ncol(index_pa$yoy)]
+      index_pa$index <- as.data.frame(index_pa$index[,2:ncol(index_pa$index)], row.names = index_pa$rownames)
+      index_pa$yoy <- as.data.frame(index_pa$yoy[,2:ncol(index_pa$yoy)], row.names = index_pa$rownames)
+      
+    }    
+    else if ({
+    input$i_userperiod == "Financial Year"
+    })
+    {
+      index_fy$index <- merge(index_fy$index,
+                                  i_df_useroutput$index,
+                                  by = 0,
+                                  all = TRUE
+                                  )
+    
+      index_fy$yoy <- merge(index_fy$yoy,
+                                i_df_useroutput$yoy,
+                                by = 0,
+                                all = TRUE
+                                )
+      
+      index_fy$rownames <- sort.int(unique(c(index_fy$rownames, i_user$rows)))
+      index_fy$indexnames <- colnames(index_fy$yoy)[2:ncol(index_fy$yoy)]
+      index_fy$index <- as.data.frame(index_fy$index[,2:ncol(index_fy$index)], row.names = index_fy$rownames)
+      index_fy$yoy <- as.data.frame(index_fy$yoy[,2:ncol(index_fy$yoy)], row.names = index_fy$rownames)
+      
+    }
+  
+  showNotification("Index added.")
+  
+})
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ INDICES TABLE: USER INDEX | END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DEFLATOR CALCULATOR: INPUT | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   
@@ -311,8 +837,9 @@ output$i_downloadall <- downloadHandler(
 observe({
   
   if({
-    input$def_tabs == 'Guidance' & 
-    !is.null(input$def_fromto)
+    input$def_tabs == 'Guidance' &
+    !is.null(input$def_periodstart) &
+    !is.null(input$def_periodend)  
     })
     {
       disable("def_indices")
@@ -338,101 +865,134 @@ observe({
       enable("def_download")
       enable("def_update")
     }
+    
 })
   
 # Creates variable to that aligns with the app's default settings (i.e. prevents loading errors)
-def_chosenindex = reactiveValues(rownames = rownames(index_obr_fy), data = index_obr_fy)
+def_chosenindex = reactiveValues(index = index_obr_fy_index,
+                                yoy = index_obr_fy_yoy,
+                                rownames = rownames(index_obr_fy),
+                                indexnames = colnames(index_obr_fy_yoy)
+                                )
   
 # Ensures correct dataframe is chosen for future use, based on user input
-observeEvent({
-              input$def_period
-              }, {
+observe({                
+  
+  # Select the correct period
+  if ({
+    input$def_period == "Quarterly"
+  })
+  {
+    def_chosenindex$index = index_qtr$index
+    def_chosenindex$yoy = index_qtr$yoy
+    def_chosenindex$rownames = rownames(index_qtr$index)
+    def_chosenindex$indexnames = index_qtr$indexnames
+    def_chosenindex$nrows = nrow(index_qtr$index)
+  }
+  else if ({
+    input$def_period == "Calendar Year"  
+  })
+  {
+    def_chosenindex$index = index_pa$index
+    def_chosenindex$yoy = index_pa$yoy
+    def_chosenindex$rownames = rownames(index_pa$index)
+    def_chosenindex$indexnames = index_pa$indexnames
+    def_chosenindex$nrows = nrow(index_pa$index)
+  }
+  else if ({
+    input$def_period == "Financial Year"
+  })
+  {
+    def_chosenindex$index = index_fy$index
+    def_chosenindex$yoy = index_fy$yoy
+    def_chosenindex$rownames = rownames(index_fy$index)
+    def_chosenindex$indexnames = index_fy$indexnames
+    def_chosenindex$nrows = nrow(index_fy$index)
+  }
+  
+})
+
+
+# Generates correct base period dropdown menu in indices user interface, based on user input
+observe({
+  
+  updateSelectInput(session = session, 
+                    inputId = "def_indices",
+                    choices = def_chosenindex$indexnames
+                    )
+  
+})
+
+observe({
   
   if ({
-      input$def_period == "Quarterly"
-      })
-      {
-        def_chosenindex$data = index_obr_qtr
-        def_chosenindex$rownames = rownames(index_obr_qtr)
-        def_chosenindex$nrows = nrow(def_chosenindex$data)
-      } 
-      else if ({
-      input$def_period == "Calendar Year"
-      })
-      {
-        def_chosenindex$data = index_obr_pa
-        def_chosenindex$rownames = rownames(index_obr_pa)
-        def_chosenindex$nrows = nrow(def_chosenindex$data)
-      } 
-      else if ({input$def_period == "Financial Year"
-      })
-      {
-        def_chosenindex$data = index_obr_fy
-        def_chosenindex$rownames = rownames(index_obr_fy)
-        def_chosenindex$nrows = nrow(def_chosenindex$data)
-      } 
-      else {
-        def_chosenindex$data = index_obr_all
-        def_chosenindex$rownames = rownames(index_obr_all)
-        def_chosenindex$nrows = nrow(def_chosenindex$data)
-      }
-      
+    grepl("User Index:", input$def_indices)
+  })
+  {
+    disable("def_period")
+  }
+  else {
+    enable("def_period")
+  }
+  
 })
   
-  # Checks that inputs are valid, else disables table update
+# Checks that inputs are valid, else disables table update
 observeEvent({
-              input$def_period
-              input$def_periodstart
-              input$def_periodend
-              }, {
-                 
-  if ({
-      input$def_tabs != "Guidance" &
-      !is.null(input$def_periodstart) &
-      !is.null(input$def_periodend) &
-      as.numeric(str_sub(input$def_periodstart, 1, 4)) >= as.numeric(str_sub(rownames(def_chosenindex$data)[1], 1, 4)) &
-      as.numeric(str_sub(input$def_periodend, 1, 4)) > as.numeric(str_sub(input$def_periodstart, 1, 4))
-      }) {
-    
-      if ({
-          input$def_period == "Calendar Year"
-          })
-          {
-            enable("def_update")
-          } 
-          else if ({
-          input$def_period == "Quarterly" &
-          grepl(pattern = 'Q', input$def_periodstart, ignore.case = TRUE) &
-          grepl(pattern = 'Q', input$def_periodend, ignore.case = TRUE) &
-          as.numeric(nchar(input$def_periodstart)) - as.numeric(str_locate(input$def_periodstart, pattern = 'Q'))[1] == 1 &
-          as.numeric(nchar(input$def_periodend)) - as.numeric(str_locate(input$def_periodend, pattern = 'Q'))[1] == 1 &
-          as.numeric(str_sub(input$def_periodstart, -1)) <= 4 &
-          as.numeric(str_sub(input$def_periodend, -1)) <= 4
-          }) 
-          {
-            enable("def_update")
-          } 
-          else if ({
-          input$def_period == "Financial Year" &
-          grepl(pattern = '/', input$def_periodstart) &
-          grepl(pattern = '/', input$def_periodend) &
-          as.numeric(nchar(input$def_periodstart)) - as.numeric(str_locate(input$def_periodstart, pattern = '/'))[1] == 2 &
-          as.numeric(nchar(input$def_periodend)) - as.numeric(str_locate(input$def_periodend, pattern = '/'))[1] == 2 &
-          as.numeric(str_sub(input$def_periodstart, -2, -1)) - as.numeric(str_sub(input$def_periodstart, 3, 4)) == 1 &
-          as.numeric(str_sub(input$def_periodend, -2, -1)) - as.numeric(str_sub(input$def_periodend, 3, 4)) == 1 
-          }) 
-          {
-            enable("def_update")
-          } 
-          else {
-            disable("def_update")
-          }
-    
-          }
-      else {
-            disable("def_update")
-            }
-})
+               input$def_period
+               input$def_periodstart
+               input$def_periodend
+               }, {
+                  
+   if ({
+       input$def_tabs != "Guidance" &
+       !is.null(input$def_periodstart) &
+       !is.null(input$def_periodend) &
+       !is.na(as.numeric(str_sub(input$def_periodstart, 1, 4))) &
+       !is.na(as.numeric(str_sub(input$def_periodend, 1, 4))) #&
+       as.numeric(str_sub(input$def_periodstart, 1, 4)) >= as.numeric(str_sub(def_chosenindex$rownames[1], 1, 4)) &
+       as.numeric(str_sub(input$def_periodend, 1, 4)) > as.numeric(str_sub(input$def_periodstart, 1, 4))
+       }) {
+     
+       if ({
+           input$def_period == "Calendar Year"
+           })
+           {
+             enable("def_update")
+           } 
+           else if ({
+           input$def_period == "Quarterly" &
+           grepl(pattern = 'Q', input$def_periodstart, ignore.case = TRUE) &
+           grepl(pattern = 'Q', input$def_periodend, ignore.case = TRUE) &
+           as.numeric(nchar(input$def_periodstart)) - as.numeric(str_locate(input$def_periodstart, pattern = 'Q'))[1] == 1 &
+           as.numeric(nchar(input$def_periodend)) - as.numeric(str_locate(input$def_periodend, pattern = 'Q'))[1] == 1 &
+           as.numeric(str_sub(input$def_periodstart, -1)) <= 4 &
+           as.numeric(str_sub(input$def_periodend, -1)) <= 4
+           }) 
+           {
+             enable("def_update")
+           } 
+           else if ({
+           input$def_period == "Financial Year" &
+           grepl(pattern = '/', input$def_periodstart) &
+           grepl(pattern = '/', input$def_periodend) &
+           as.numeric(nchar(input$def_periodstart)) - as.numeric(str_locate(input$def_periodstart, pattern = '/'))[1] == 2 &
+           as.numeric(nchar(input$def_periodend)) - as.numeric(str_locate(input$def_periodend, pattern = '/'))[1] == 2 &
+           as.numeric(str_sub(input$def_periodstart, -2, -1)) - as.numeric(str_sub(input$def_periodstart, 3, 4)) == 1 &
+           as.numeric(str_sub(input$def_periodend, -2, -1)) - as.numeric(str_sub(input$def_periodend, 3, 4)) == 1 
+           }) 
+           {
+             enable("def_update")
+           } 
+           else {
+             disable("def_update")
+           }
+     
+           }
+       else {
+             disable("def_update")
+             }
+ })
 
 # Generates starting positions for each period
 observeEvent({
@@ -509,7 +1069,7 @@ observeEvent({
               }, {
     
   if ({
-      input$disc_period == "Calendar Year"
+      input$def_period == "Calendar Year"
       })
       {
         updateNumericInput(session = session, inputId = "def_periodstart",
@@ -529,7 +1089,6 @@ observeEvent({
   
 # Creates correct options for use in real/nominal options, and column headers
 def_chosen = reactiveValues()
-def_chosen$columns = list() 
   
 observeEvent({
               input$def_period
@@ -547,7 +1106,7 @@ observeEvent({
                                       rep(input$def_periodstart:input$def_periodend, each = 1)
                                       )
           
-          def_chosen$columns <- def_chosen$columns[(which(def_chosen$columns == input$def_periodstart)):(which(def_chosen$columns==input$def_periodend))]
+          def_chosen$columns <- def_chosen$columns[(which(def_chosen$columns == input$def_periodstart)):(which(def_chosen$columns == input$def_periodend))]
           def_chosen$collength <- length(def_chosen$columns)
 
         } 
@@ -573,28 +1132,31 @@ observeEvent({
                                       "Q",
                                       rep(1:4, length = 4)
                                       )
-        def_chosen$columns <- def_chosen$columns[(which(def_chosen$columns == input$def_periodstart)):(which(def_chosen$columns==input$def_periodend))]
+        def_chosen$columns <- def_chosen$columns[(which(def_chosen$columns == input$def_periodstart)):(which(def_chosen$columns == input$def_periodend))]
         def_chosen$collength <- length(def_chosen$columns)
         }
     
   })
                 
 })
-    
+
 # Generates correct Real/Nominal option for input              
 output$def_fromto <- renderUI({
-  
+
   if ({
       input$def_realnom == "Real to Nominal"
       }) 
       {
-        selectInput(inputId = "def_fromto", label = "Convert From (Base-year):",
-                    choices = c(def_chosenindex$rownames),
+        selectInput(inputId = "def_fromto",
+                    label = "Convert From (Base-year):",
+                    choices = unique(c(
+                                      def_chosenindex$rownames[which(!is.na(def_chosenindex$index[, which(input$def_indices == def_chosenindex$indexnames)]))],
+                                      def_chosen$columns)),
                     selected = if ({
                                   input$def_period == "Calendar"
                                   })
                                   {
-                                    yearknown[nchar(year_known)==4]
+                                    year_known[nchar(year_known) == 4]
                                   }
                                   else if ({
                                   input$def_period == "Financial Year"
@@ -607,14 +1169,17 @@ output$def_fromto <- renderUI({
                                   }
                     )
       }
-      else { 
-        selectInput(inputId = "def_fromto", label = "Convert To (Base-year):",
-                    choices = c(def_chosenindex$rownames),
+      else {
+        selectInput(inputId = "def_fromto",
+                    label = "Convert To (Base-year):",
+                    choices = unique(c(
+                                      def_chosenindex$rownames[which(!is.na(def_chosenindex$index[, which(input$def_indices == def_chosenindex$indexnames)]))],
+                                      def_chosen$columns)),
                     selected = if ({
                                   input$def_period == "Calendar"
                                   })
                                   {
-                                    yearknown[nchar(year_known)==4]
+                                    year_known[nchar(year_known) == 4]
                                   }
                                   else if ({
                                   input$def_period == "Financial Year"
@@ -627,6 +1192,7 @@ output$def_fromto <- renderUI({
                                   }
                     )
       }
+  
 })
 
 # Generates the basic input table...
@@ -717,33 +1283,32 @@ observeEvent({
         !is.null(def_chosenindex$rownames)
         })
         {
-          def_shift = if({
-                        input$def_indices == "None"
-                        })
-                        {
-                          1
-                        }
-                        else {
-                          8
-                        }  
+          def_shift = which(colnames(def_chosenindex$yoy) == input$def_indices)
         
           # Finding the relevant index:
-          def_chosenindex$mutate <- def_chosenindex$data[, which(colnames(def_chosenindex$data) == input$def_indices) + def_shift]
-          def_chosenindex$yoy <- def_chosenindex$data[, which(colnames(def_chosenindex$data) == input$def_indices)]
+          def_chosenindex$mutateindex <- def_chosenindex$index[, def_shift]
+          def_chosenindex$mutateyoy <- def_chosenindex$yoy[, def_shift]
+          
+          # Removing the non-NA rownames/nrows:
+          def_chosenindex$mutateindex <- def_chosenindex$mutateindex[!is.na(def_chosenindex$mutateindex)]
+          def_chosenindex$mutateyoy <- def_chosenindex$mutateyoy[!is.na(def_chosenindex$mutateyoy)]
+          def_chosenindex$rownames <- def_chosenindex$rownames[!is.na(def_chosenindex$mutateindex)]
+          def_chosenindex$nrows <- length(def_chosenindex$mutateindex[!is.na(def_chosenindex$mutateindex)])
+          def_chosenindex$lastrow <- max(which(!is.na(def_chosenindex$mutateindex)))
       
           # Adding additional rows to mutated index if input period extends beyond selection
           if ({
               (input$def_period == "Calendar Year") | (input$def_period == "Financial Year")
               }) 
               {
-                def_chosenindex$newrows <- as.numeric(str_sub(input$def_periodend, 1, 4)) - as.numeric(str_sub(def_chosenindex$rownames[def_chosenindex$nrows], 1, 4))
+                def_chosenindex$newrows <- as.numeric(str_sub(input$def_periodend, 1, 4)) - as.numeric(str_sub(def_chosenindex$rownames[def_chosenindex$lastrow], 1, 4))
               }
               else if ({
               input$def_period == "Quarterly"
               })
               {
-                def_chosenindex$newyears <- 4*(as.numeric(str_sub(input$def_periodend, 1, 4)) - as.numeric(str_sub(def_chosenindex$rownames[def_chosenindex$nrows], 1, 4)))
-                def_chosenindex$newquarters <- as.numeric(str_sub(input$def_periodend, -1)) - as.numeric(str_sub(def_chosenindex$rownames[def_chosenindex$nrows], -1))
+                def_chosenindex$newyears <- 4*(as.numeric(str_sub(input$def_periodend, 1, 4)) - as.numeric(str_sub(def_chosenindex$rownames[def_chosenindex$lastrow], 1, 4)))
+                def_chosenindex$newquarters <- as.numeric(str_sub(input$def_periodend, -1)) - as.numeric(str_sub(def_chosenindex$rownames[def_chosenindex$lastrow], -1))
                 def_chosenindex$newrows <- def_chosenindex$newyears + def_chosenindex$newquarters
               }
       
@@ -759,19 +1324,18 @@ observeEvent({
                       (input$def_period == "Calendar Year") | (input$def_period == "Financial Year")
                       }) 
                       {
-                        def_chosenindex$addrows[d] = def_chosenindex$mutate[length(def_chosenindex$mutate)]*{
-                                                        (1+(def_chosenindex$yoy[length(def_chosenindex$mutate)]/100))^d}
-                      } 
-                      else if ({
+                        def_chosenindex$addrows[d] = def_chosenindex$mutateindex[length(def_chosenindex$mutateindex)]*{
+                                                        (1+(def_chosenindex$mutateyoy[length(def_chosenindex$mutateindex)]/100))^d}
+                      }
+                }
+                
+                for (q in 1:(4*def_chosenindex$newrows)) {
+                  if ({
                       input$def_period == "Quarterly"
                       })
                       {
-                        for (q in 1:4) {
-                          def_chosenindex$addrows <- c(def_chosenindex$addrows, 
-                                                       def_chosenindex$mutate[(length(def_chosenindex$mutate)-4+q)]*{
-                                                         (1+(def_chosenindex$yoy[(length(def_chosenindex$mutate)-4+q)]/100))^ceiling(d/4)}
-                                                       )
-                        }
+                        def_chosenindex$addrows[q] <- def_chosenindex$mutateindex[(length(def_chosenindex$mutateindex))]*{
+                                                         (1+((def_chosenindex$mutateyoy[length(def_chosenindex$mutateindex)]/100)/4))^q}
                       }
                 }
       
@@ -780,7 +1344,7 @@ observeEvent({
                                                                             == FALSE
                                                                             )
       
-                def_chosenindex$mutate = c(def_chosenindex$mutate,
+                def_chosenindex$mutateindex = c(def_chosenindex$mutateindex,
                                            unlist(def_chosenindex$addrows)
                                             )
     
@@ -788,20 +1352,22 @@ observeEvent({
                                                   c(def_chosenindex$rownames, unlist(def_chosenindex$addrownames))
                                                   )
       
-              }
+          }
+          
+          
       
       # Finding the correct base year in the index
-      def_base_value <- def_chosenindex$mutate[which(def_chosenindex$rownames == input$def_fromto)]
+      def_base_value <- def_chosenindex$mutateindex[which(def_chosenindex$rownames == input$def_fromto)]
       
       # Converting input values to output values 
       if ({
           input$def_realnom == "Real to Nominal"
           })
           {
-            def_chosenindex$final <- def_chosenindex$mutate / def_base_value
+            def_chosenindex$final <- def_chosenindex$mutateindex / def_base_value
           } 
           else {
-            def_chosenindex$final <- def_base_value / def_chosenindex$mutate
+            def_chosenindex$final <- def_base_value / def_chosenindex$mutateindex
           }
       
       # Transmuting the dataframe
@@ -824,8 +1390,8 @@ def_data_output = reactive({
   def_df_out = hot_to_r(input$def_hot)
       
   def_df_output = as.data.frame(mapply('*', def_df_out, def_chosenindex$final[,
-                                                                              which(def_chosenindex$rownames==input$def_periodstart):
-                                                                              which(def_chosenindex$rownames==input$def_periodend)]))
+                                                                              which(def_chosenindex$rownames == input$def_periodstart):
+                                                                              which(def_chosenindex$rownames == input$def_periodend)]))
       
 })
   
@@ -881,8 +1447,8 @@ def_download_df = reactive({
 
   # Generates the download table  
   def_download$vector <- 0*def_chosenindex$final[,
-                                                  which(def_chosenindex$rownames==input$def_periodstart):
-                                                  (which(def_chosenindex$rownames==input$def_periodend)-1)]
+                                                  which(def_chosenindex$rownames == input$def_periodstart):
+                                                  (which(def_chosenindex$rownames == input$def_periodend)-1)]
   
   def_download$combine <- t(matrix(c(def_download$date,
                                      sub(0, "", def_download$vector)
@@ -892,8 +1458,8 @@ def_download_df = reactive({
   def_download$output = hot_to_r(input$def_cold)
     
   def_download$index = def_chosenindex$final[, 
-                                              which(def_chosenindex$rownames==input$def_periodstart):
-                                              which(def_chosenindex$rownames==input$def_periodend)]
+                                              which(def_chosenindex$rownames == input$def_periodstart):
+                                              which(def_chosenindex$rownames == input$def_periodend)]
   
   def_download_df = rbind(def_download$input,
                           def_download$output, 
@@ -921,81 +1487,6 @@ output$def_download <- downloadHandler(
 )
         
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DEFLATOR CALCULATOR: OUTPUT | END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DEFLATOR CALCULATOR: OUTPUT (% CHANGE) | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-# All variables pre-fixed with 'def_' to prevent duplication with other outputs    
-  
-observeEvent({
-              input$def_fromto
-              }, {
-        
-  change = if({
-              input$def_fromto == "Real to Nominal"
-              })
-              {
-                "Nominal"
-              }
-              else {
-                "Real"
-              }  
-    
-})
-  
-# Percentage change function creation             
-pc = function(x,y) {(x-y)/y}
-  
-# Correct NA errors to return 0
-fix_nan <- function(x){
-                      x[is.nan(x)] <- 0
-                      x
-}
-  
-# Create percentage change dataframe (inc. function)
-def_data_output_pc = reactive({
-    
-  def_df_out_pc = hot_to_r(input$def_cold)
-    
-  def_df_out_pc_lag = def_df_out_pc[, 1:(length(def_df_out_pc) - 1)]
-    
-  def_df_out_pc_lag = cbind(a = def_df_out_pc[, 1],
-                            def_df_out_pc_lag
-                            )
-
-  if ({
-      input$def_pchange == "Base-to-period"
-      })
-      {
-        def_df_output_pc = as.data.frame(pc(def_df_out_pc, def_df_out_pc[, which(def_chosenindex$rownames == input$def_fromto)]))} 
-      else {
-        def_df_output_pc = as.data.frame(pc(def_df_out_pc, def_df_out_pc_lag))
-      }
-    
-  def_df_output_pc
-    
-})
-  
-# Produce percentage change output table
-output$def_coldest <- renderRHandsontable({
-  
-  def_df_output_pc = def_data_output_pc()
-    
-  if ({
-      !is.null(def_df_output_pc)
-      })
-      {
-        rhandsontable(def_df_output_pc, 
-                      useTypes = TRUE, stretchH = "all", colHeaders = unlist(list(def_chosen$columns)), readOnly = TRUE) %>% 
-                      hot_cols(format = "0.0%", renderer = 
-                        "function(instance, td, row, col, prop, value, cellProperties) {
-                        Handsontable.renderers.NumericRenderer.apply(this, arguments); if(value == 0.00){
-                        td.style.color = 'rgb(235, 235, 235)'; td.style.background = 'white'; } else if (value != 0) {td.style.color = 'black';}
-                        }"
-                      ) 
-      }
-})
-  
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DEFLATOR CALCULATOR: OUTPUT (% CHANGE) | END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  
   
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DISCOUNTING CALCULATOR: RATE GENERATION | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    
   
@@ -1235,7 +1726,9 @@ observeEvent({
   if ({
       input$disc_tabs != "Guidance" &
       !is.null(input$disc_periodstart) &
-      !is.null(input$disc_periodend)
+      !is.null(input$disc_periodend) &
+      is.numeric(str_sub(input$disc_periodstart, 1, 4)) &
+      is.numeric(str_sub(input$disc_periodend, 1, 4))
       })
       {    
     
