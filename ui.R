@@ -24,15 +24,20 @@ ui = fluidPage(
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DEFAULT GUIDANCE TAB | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 tabPanel("Guidance",
-          mainPanel(
-            h1("Version", style = "font-weight: bold; font-family: Arial, Helvetica, sans-serif; border-bottom:1px solid black"),
-            p("This version of the DASD Indexation Tool is using data published by the Office for Budget Responsibility (OBR) in the following publication:",
-              tags$a(updatefilename, href= updateweblink, target="_blank"),
-              ".",
-              style = "margin-left: 1em"
+            tabsetPanel(id = "g_tabs", type = "tabs",
+              tabPanel("Overview",          
+                h1("Version", style = "font-weight: bold; font-family: Arial, Helvetica, sans-serif; border-bottom:1px solid black"),
+                p("This version of the DASD Indexation Tool is using data published by the Office for Budget Responsibility (OBR) in the following publication:",
+                tags$a(updatefilename, href= updateweblink, target="_blank"),
+                ".",
+                style = "margin-left: 1em"
+                ),
+                htmlTemplate("www/MainPage.html"), width = 12
               ),
-            htmlTemplate("www/MainPage.html"), width = 12
-          )
+              tabPanel("FAQ",
+                     htmlTemplate("www/FAQ.html"), width = 12
+              )
+            )
 ),
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DEFAULT GUIDANCE TAB | END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -55,7 +60,7 @@ tabPanel("Indices",
         ),
         conditionalPanel(
           condition = "input.i_tabs == 'Add Index'",
-            textInput(inputId = "i_userindex", label = "Index", placeholder = "Provide the index name"),
+            textInput(inputId = "i_userindex", label = "Index Name", placeholder = "Provide the index name"),
             selectInput(inputId = "i_userperiod", label = "Period Reference", choices = c(Period_References)),
             uiOutput("i_userperiodstart"),
             uiOutput("i_userperiodend"),

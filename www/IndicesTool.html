@@ -72,38 +72,56 @@
 
 <h3><b>Purpose</b></h3>
 
-<p><b>This tool is designed to:</b></p>
-<p><li>Provide up-to-date information on several commonly used indices, from 2008 onwards. It also includes short-term future projections.</li></p>
+<p><b>This tool is designed to:</b>
+<p><li>Provide up-to-date information on several commonly used indices, from 2008 onwards. It also includes short-term future projections.</li>
+<p><li>Enable user-generated indices to be used throughout the rest of the application.</li>
 
 
 <h3><b>Background</b></h3>
 
-<p><li>Indices show how prices have, in general, increased (or decreased) over time.</li></p>							
-<p><li>A price index of 100 represents the 'base period', to which all other periods are referenced to. For example, a value of 105 represents that this period's prices are 5% higher than in the base period.</li></p>														
+<p><li>Indices show how prices have, in general, increased (or decreased) over time.</li>						
+<p><li>A price index of 100 represents the 'base period', to which all other periods are referenced to. For example, a value of 105 represents that this period's prices are 5% higher than in the base period.</li>
 													
 
-<h3><b>User Guidance</b></h3>
+<h3><b>Indices: User Guidance</b></h3>
 
-<p><li><b>User Parameters:</b></li></p>
-    <p style = "margin-left: 1em">- Index: select an index from the dropdown menu.</p>
-    <p style = "margin-left: 1em">- Period Reference: select the period reference of interest (financial year, calendar year, or quarterly).</p>
-    <p style = "margin-left: 1em">- Base Period: select the relevant base year. Default varies by index. Note this cannot be set before 2008.</p>
+<p><li><b>User Parameters:</b></li>
+    <p style = "margin-left: 1em">- Index: select an index from the dropdown menu.
+    <p style = "margin-left: 1em">- Period Reference: select the period reference of interest (financial year, calendar year, or quarterly).
+    <p style = "margin-left: 1em">- Base Period: select the relevant base year. Default varies by index. Note this cannot be set before 2008.
 
-<p><li><b>Interpretation:</b></li></p>
-    <p style = "margin-left: 1em">- Period: based upon the chosen period reference.</p>
-    <p style = "margin-left: 1em">- Index: displays the chosen indices' values for every available year, dependent on the base period.</p>
-    <p style = "margin-left: 1em">- YoY (%): displays the year-on-year percentage change from the current period to the previous period. Note that quarterly periods refer to the same quarter from a year prior.</p>
+<p><li><b>Interpretation:</b></li>
+    <p style = "margin-left: 1em">- Period: based upon the chosen period reference.
+    <p style = "margin-left: 1em">- Index: displays the chosen indices' values for every available year, dependent on the base period.
+    <p style = "margin-left: 1em">- YoY (%): displays the year-on-year percentage change from the current period to the previous period. Note that quarterly periods refer to the same quarter from a year prior.
     
-<p><li><b>Notes:</b></li></p>
-    <p style = "margin-left: 1em">- Highlighted Rows:</p>
-    <ol><p> a. Yellow: periods for which indices are forecasts. </p>
-        <p> b. Blue: period which is the base year (if applicable). </p>
-        <p> c. Green: period which is both the base year and a forecast (if applicable). </p>
+<p><li><b>Notes:</b></li>
+    <p style = "margin-left: 1em">- Highlighted Rows:
+    <ol><p> a. Yellow: periods for which indices are forecasts.
+        <p> b. Blue: period which is the base year (if applicable).
+        <p> c. Green: period which is both the base year and a forecast (if applicable).
     </ol>
 
-<p><li><b>Download Options:</b></li></p>
-    <p style = "margin-left: 1em">- Download displayed data: downloads only the displayed data, tailored to user-selected parameters.</p>
-    <p style = "margin-left: 1em">- Download raw data: downloads the complete raw data set, with no manipulation. This includes all indices, all period references, and original base years.</p>
+<p><li><b>Download Options:</b></li>
+    <p style = "margin-left: 1em">- Download displayed data: downloads only the displayed data, tailored to user-selected parameters.
+    <p style = "margin-left: 1em">- Download raw data: downloads the complete raw data set, with no manipulation. This includes all indices, all period references, and original base years.
+    
+<h3><b>Add Index: User Guidance</b></h3>
+
+<p><li><b>User Parameters:</b></li>
+<p style = "margin-left: 1em">- Index Name: provide the index name.
+<p style = "margin-left: 1em">- Period Reference: specify the period reference (e.g. Financial Year, Calendar Year, Quarterly).
+<p style = "margin-left: 1em">- Start Period: define the start period for the user-generated index.
+<p style = "margin-left: 1em">- End Period: define the end preiod for the user-generated index.
+<p style = "margin-left: 1em">- Generate Table: updates the table based on user parameters.
+<p style = "margin-left: 1em">- Update Local Index Set: adds the user-generated index to local set.
+
+<p><li>Notes:</li>
+<p style = "margin-left: 1em">a. Index Name: must be supplied, and must be named different to other user-generated indices.
+<p style = "margin-left: 1em">b. User-generated indices will not be saved upon closing the application.
+<p style = "margin-left: 1em">c. Table Options: a complete set of Index values, or year-on-year percentage changes must be supplied (or both), and the following conditions apply:
+<p style = "margin-left: 2em">i. Index: if supplied only, the year-on-year changes will be automatically generated, with the start period year-on-year change being equal to 0.
+<p style = "margin-left: 2em">ii. Year-on-year: if supplied only, the index values will be automatically generated, with the start period index being equal to 100 (unless otherwise specified).
 														
 <div> </div>
 
