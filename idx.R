@@ -140,15 +140,23 @@ fcst_pa <- list()
 
 # Generate quarterly forecast periods (a); find last known quarter
 known_qtr <- if (date_qtr == 4) {
-  paste0(known_pa, "Q", date_qtr)
-} else paste0(date_year, "Q", date_qtr)
+  paste0(known_pa,
+         "Q",
+         date_qtr
+         )
+} else paste0(date_year,
+              "Q",
+              date_qtr
+              )
 
 # Generate quarterly forecast periods (b); finish calendar year for 'a'
 fcst_qtr_1 <- list()
-  for (qtr_1 in c((as.numeric(str_sub(known_qtr, -1))+1):4)) {
+  for (qtr_1 in c((as.numeric(str_sub(known_qtr, -1)) + 1):4)) {
     if (str_sub(known_qtr, -1) == 4) {
       break
-  } else fcst_qtr_1[[qtr_1]] <- paste0(str_sub(known_qtr,1,-2), qtr_1)
+  } else fcst_qtr_1[[qtr_1]] <- paste0(str_sub(known_qtr,1,-2),
+                                       qtr_1
+                                       )
 }
 
 # Generate quarterly forecast periods (c); find future calendar years
@@ -160,18 +168,28 @@ fcst_qtr_2a <- list()
 # Generate quarterly forecast periods (d); convert 'c' into quarters
 fcst_qtr_2b <- list()
   for (qtr_2b in c(1:4)) {
-    fcst_qtr_2b[[qtr_2b]] <- paste0(fcst_qtr_2a, "Q", qtr_2b)
+    fcst_qtr_2b[[qtr_2b]] <- paste0(fcst_qtr_2a,
+                                    "Q",
+                                    qtr_2b
+                                    )
   }
 
-fcst_qtr <- c(fcst_qtr_1, fcst_qtr_2b)
+fcst_qtr <- c(fcst_qtr_1,
+              fcst_qtr_2b
+              )
 
 # Generate financial year forecasts
-known_fy <- paste0(str_sub(known_qtr, 1, 4), "/", as.numeric(str_sub(known_qtr, 3, 4)) +1)
+known_fy <- paste0(as.numeric(str_sub(known_qtr, 1, 4)) - 1 ,
+                   "/",
+                   as.numeric(str_sub(known_qtr, 3, 4))
+                   )
 
 fcst_fy <- list()
   for (fy in c(1:6)) {
-    fcst_fy[[fy]] <- paste0(as.numeric(str_sub(known_fy, 1, 4)) + fy, "/", 
-                            as.numeric(str_sub(known_fy, -2, -1)) + fy)
+    fcst_fy[[fy]] <- paste0(as.numeric(str_sub(known_fy, 1, 4)) + fy,
+                            "/", 
+                            as.numeric(str_sub(known_fy, -2, -1)) + fy
+                            )
   }
 
 # Combine all forecast periods into one list
