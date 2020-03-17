@@ -38,7 +38,7 @@ Within the airflow-DefCalc repository, the following are key files:
 * packrat; _details all packages/dependencies required for the app to load_
 
 Within the airflow-dags repository, the following are key file(s):
-* defcalc_obr_scraper_global.py; _contains the code to ensure that the code within airflow-Defcalc is automatically ran at specified time intervals_
+* defcalc_obr_scraper_global.py; _contains the code to ensure that the code within airflow-DefCalc is automatically ran at specified time intervals_
 
 ### Deployment
 When ready to deploy new releases, newly published releases should adhere to the following versioning formats: https://semver.org/
