@@ -49,11 +49,13 @@ latest_url_csv$filename <- gsub(".xlsx","",latest_url_csv$filename)
 # Create variables for UI for the latest filename used and the website link. 
 updatefilename <- ifelse(length(latest_url_csv$filename[latest_url_csv$updatereq == 1]) == 0,
                          latest_url_csv$filename[latest_url_csv$s3 == 1 & latest_url_csv$latest == 1],
-                         latest_url_csv$filename[latest_url_csv$updatereq == 1])
+                         latest_url_csv$filename[latest_url_csv$updatereq == 1]
+                         )
 
 updateweblink <- ifelse(length(latest_url_csv$weblink[latest_url_csv$updatereq == 1]) == 0,
                         latest_url_csv$weblink[latest_url_csv$s3 == 1 & latest_url_csv$latest == 1],
-                        latest_url_csv$weblink[latest_url_csv$updatereq == 1])
+                        latest_url_csv$weblink[latest_url_csv$updatereq == 1]
+                        )
 
 # Selects index drop down options needed for default UI (i.e. removes duplicates)
 index_options <- index_obr_all %>% select(starts_with("yoy_"))
@@ -101,6 +103,7 @@ file.remove("obr_raw.xlsx")
 
 # Scrapes raw OBR file to find cell containing date information (best available resource)
 date_row <- grep(paste(month.name, collapse ="|"), index_obr_raw[, 1])
+date_row <- date_row[1]
 date_filter <- index_obr_raw[date_row,]
 date_cell <- date_filter[, colSums(date_filter != "") != 0]
 

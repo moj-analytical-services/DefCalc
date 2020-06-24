@@ -1639,7 +1639,7 @@ observeEvent({
         })
         {
           numericInput(inputId = "disc_periodstart", label = "Start Period",
-                        value = 1, min = 1, max = 1
+                        value = 0, min = 0, max = 0
                        )
         } 
         else if ({
@@ -1668,7 +1668,7 @@ observeEvent({
         })
         {
           numericInput(inputId = "disc_periodend", label = "End Period",
-                        value = 10, min = 2, max = 125
+                        value = 10, min = 1, max = 125
                        )
         }
         else if ({

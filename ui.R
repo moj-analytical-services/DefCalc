@@ -107,10 +107,6 @@ tabPanel("Indexation Calculator",
             numericInput(inputId = "def_inputrows", label = "Number of Required Rows", value = 10, min = 1, step = 1)
         ),
         conditionalPanel(
-          condition = "input.def_tabs == '% Change' || input.def_tabs == 'Guidance'",
-            selectInput(inputId = "def_pchange", label = "Percentage Change", choices = c("Base-to-period", "Period-to-period"))
-        ),
-        conditionalPanel(
           condition = "input.def_tabs == 'Input' || input.def_tabs == 'Guidance'",
             actionButton(inputId = "def_update", label = "Generate Table")
         ),
