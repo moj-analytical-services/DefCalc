@@ -20,12 +20,12 @@ ui = fluidPage(
       useShinyjs(),
       htmlTemplate("www/Top_B.html"),
       navbarPage("",
-                
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DEFAULT GUIDANCE TAB | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 tabPanel("Guidance",
             tabsetPanel(id = "g_tabs", type = "tabs",
-              tabPanel("Overview",          
+              tabPanel("Overview",
                 h1("Version", style = "font-weight: bold; font-family: Arial, Helvetica, sans-serif; border-bottom:1px solid black"),
                 p("This version of the DASD Indexation Tool is using data published by the Office for Budget Responsibility (OBR) in the following publication:",
                 tags$a(updatefilename, href= updateweblink, target="_blank"),
@@ -44,10 +44,10 @@ tabPanel("Guidance",
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ INDICES TABLE | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-# All variables pre-fixed with 'i_' to prevent duplication with other outputs        
+# All variables pre-fixed with 'i_' to prevent duplication with other outputs
 
 tabPanel("Indices",
-    
+
       sidebarPanel(
         # Dropdown menus: indices = different indices available; period = frequency of data; baseyear = chosen base year
         conditionalPanel(
@@ -70,7 +70,7 @@ tabPanel("Indices",
       ),
       mainPanel(
         tabsetPanel(id = "i_tabs", type = "tabs",
-          # Guidance tab          
+          # Guidance tab
           tabPanel("Guidance",
                    htmlTemplate("www/IndicesTool.html"), width = 12
           ),
@@ -80,20 +80,20 @@ tabPanel("Indices",
           ),
           # User Generated index
           tabPanel("Add Index",
-            withSpinner(rHandsontableOutput("i_user"))       
+            withSpinner(rHandsontableOutput("i_user"))
           )
         )
       )
   ),
-                
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ INDICES TABLE | END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DEFLATOR CALCULATOR | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
-                
-# All variables pre-fixed with 'def_' to prevent duplication with other outputs                
-                
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DEFLATOR CALCULATOR | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# All variables pre-fixed with 'def_' to prevent duplication with other outputs
+
 tabPanel("Indexation Calculator",
-         
+
       sidebarPanel(
       # Dropdown menus:
         selectInput(inputId = "def_indices", label = "Index", choices = colnames(index_options), selected = "GDP deflator"),
@@ -115,13 +115,13 @@ tabPanel("Indexation Calculator",
             downloadButton("def_download", label = "Download Results")
         )
     ),
-                         
+
       mainPanel(
         tabsetPanel(id = "def_tabs", type = "tabs",
-          # Guidance tab          
+          # Guidance tab
           tabPanel("Guidance",
                    htmlTemplate("www/IndexationTool.html"), width = 12
-          ),          
+          ),
           # Input tab for user data
           tabPanel("Input",
             withSpinner(rHandsontableOutput("def_hot"))
@@ -141,7 +141,7 @@ tabPanel("Indexation Calculator",
 # All variables pre-fixed with 'disc_' to prevent duplication with other outputs
 
 tabPanel("Discount Calculator",
-                     
+
       sidebarPanel(
       # Dropdown menus:
         selectInput(inputId = "disc_rate", label = "Discount Rate", choices = c("Standard", "Health")),
@@ -159,13 +159,13 @@ tabPanel("Discount Calculator",
             downloadButton("disc_download", label = "Download Results")
         )
         ),
-                              
+
       mainPanel(
         tabsetPanel(id = "disc_tabs", type = "tabs",
-          # Guidance tab          
+          # Guidance tab
           tabPanel("Guidance",
                    htmlTemplate("www/DiscountingTool.html"), width = 12
-          ),                  
+          ),
           # Input tab for user data
           tabPanel("Input",
             withSpinner(rHandsontableOutput("disc_hot"))
