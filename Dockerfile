@@ -1,36 +1,39 @@
-FROM rocker/shiny@sha256:627a2b7b3b6b1f6e33d37bdba835bbbd854acf70d74010645af71fc3ff6c32b6
-
-WORKDIR /srv/shiny-server
-
-# Cleanup shiny-server dir
-RUN rm -rf ./*
-
-# Make sure the directory for individual app logs exists
-RUN mkdir -p /var/log/shiny-server
-
-# Install dependency on xml2 and cleanup
-RUN apt-get update && \
-apt-get install --yes libxml2-dev libssl-dev && \
-apt-get clean && rm -rf /var/lib/apt/lists/
-
-# Add Packrat files individually so that next install command
-# can be cached as an image layer separate from application code
-ADD packrat packrat
-
-# Install packrat itself then packages from packrat.lock
-RUN R -e "install.packages('packrat'); packrat::restore()"
-
-# Add shiny app code
-ADD . .
-
-# Shiny runs as 'shiny' user, adjust permissions
-RUN chown -R shiny:shiny /var/log/shiny-server && \
-chown -R shiny:shiny /usr/local/lib/R/site-library && \
-chown -R shiny:shiny /var/lib/shiny-server && \
-chown -R shiny:shiny .
-
-# Run shiny-server on port 80
-RUN sed -i 's/3838/8080/g' /etc/shiny-server/shiny-server.conf
-EXPOSE 8080
-
-USER shiny
+FROM quay.io/mojanalytics/rshiny:3.5.1 
+2 
+ 
+3 ENV PATH="/opt/shiny-server/bin:/opt/shiny-server/ext/node/bin:${PATH}" 
+4 ENV SHINY_APP=/srv/shiny-server 
+5 ENV NODE_ENV=production 
+6 
+ 
+7 WORKDIR /srv/shiny-server 
+8 
+ 
+9 # ENV SHINY_GAID <your google analytics token here> 
+10 
+ 
+11 # Add environment file individually so that next install command 
+12 # can be cached as an image layer separate from application code 
+13 ADD environment.yml environment.yml 
+14 
+ 
+15 # Install packrat itself then packages from packrat.lock 
+16 RUN conda env update --file environment.yml -n base 
+17 RUN npm i -g ministryofjustice/analytics-platform-shiny-server#v0.0.3 
+18 
+ 
+19 ## ----------------------------------------------------- 
+20 ## Uncomment if still using packrat alongside conda 
+21 ## Install packrat itself then packages from packrat.lock 
+22 # ADD packrat packrat 
+23 # RUN R -e "install.packages('packrat'); packrat::restore()" 
+24 ## ------------------------------------------------------ 
+25 
+ 
+26 # Add shiny app code 
+27 ADD . . 
+28 
+ 
+29 USER shiny 
+30 CMD analytics-platform-shiny-server 
+31 EXPOSE 9999 
