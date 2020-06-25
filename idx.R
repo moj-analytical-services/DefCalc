@@ -14,7 +14,7 @@ library(rhandsontable) # required to add tabs to UI
 #index_obr_pa <- readWorkbook("obr.xlsx", sheet = "pa", colNames = TRUE, rowNames = TRUE)
 #index_obr_fy <- readWorkbook("obr.xlsx", sheet = "fy", colNames = TRUE, rowNames = TRUE)
 download_file_from_s3("alpha-app-defcalc/obr_raw.xlsx", "obr_raw.xlsx", overwrite = TRUE)
-index_obr_raw <- readWorkbook("obr_raw.xlsx", sheet = "Raw", colNames = TRUE)
+index_obr_raw <- readWorkbook("obr_raw.xlsx", sheet = "Inflation", colNames = TRUE)
 index_obr_raw <- index_obr_raw %>% replace(., is.na(.), "")
 names(index_obr_raw)[2:ncol(index_obr_raw)] <- ""
 
