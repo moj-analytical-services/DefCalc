@@ -65,7 +65,7 @@ tabPanel("Indices",
             uiOutput("i_userperiodstart"),
             uiOutput("i_userperiodend"),
             actionButton(inputId = "i_userupdate", label = "Generate Table"),
-            actionButton(inputId = "i_useradd", label = "Update Local Index Set"),
+            actionButton(inputId = "i_useradd", label = "Update Local Index Set")
         )
       ),
       mainPanel(
