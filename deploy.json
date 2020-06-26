@@ -4,5 +4,5 @@
   "allowed_ip_ranges": [
     "DOM1"
   ],
-  "port": 8080
+  "port": 9999
 }
