@@ -10,7 +10,7 @@ library(tidyverse) # dplyr & readr & stringr (plus other functionalities)
 library(s3tools) # importing data from AWS
 library(RCurl) # get information relating to a URL. 
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ WEB SCRAPING FOR OBR FILE | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ WEB SCRAPING FOR FILE | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Create a list of dates between now and 12 months prior. 
 date_today <- as.POSIXlt(Sys.Date())
 date_back <- date_today
@@ -51,9 +51,9 @@ latest_url$weblink <- paste('https://obr.uk/efo/economic-fiscal-outlook', latest
 # Pick out, of the latest_url dataframe, the url that needs to be downloaded and the corresponding filename.
 updateurl <- ifelse(length(latest_url$urls[latest_url$updatereq == 1]) == 0, latest_url$urls[latest_url$s3 == 1 & latest_url$latest == 1], latest_url$urls[latest_url$updatereq == 1])
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ WEB SCRAPING FOR OBR FILE | END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ WEB SCRAPING FOR FILE | END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ OBR FILE IMPORT/IDENTIFY SHEET | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ FILE IMPORT/IDENTIFY SHEET | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Only run rest of code if updatereq has a non-zero value
 if (is_empty(which(latest_url$updatereq == 1) == 0) == FALSE) {
@@ -67,37 +67,69 @@ if (is_empty(which(latest_url$updatereq == 1) == 0) == FALSE) {
   # Check which table in the spreadsheet contains the inflation figures. 
   obr_contents = read_excel(temp_obr_xlsx, sheet = "Contents")
   names(obr_contents) = "contents"
-  infopath <- 'Table* (.*):.Inflation*'
-  ginfo = grep(infopath, obr_contents$contents)
-  obrsheet <- obr_contents$contents[ginfo]
-  obrsheet <- gsub(infopath, '\\1', obrsheet) 
   
-  # Read the sheet defined by 'obrsheet' in the publication.
-  obr_xlsx = read_excel(temp_obr_xlsx,sheet = obrsheet)
-  obr_xlsx_unformatted = read_excel(temp_obr_xlsx, sheet = obrsheet)
+  # Finds the main inflation figures
+  path_inflation <- 'Table* (.*):.Inflation*'
+  info_inflation = grep(path_inflation, obr_contents$contents)
+  obr_inflation <- obr_contents$contents[info_inflation]
+  obr_inflation <- gsub(path_inflation, '\\1', obr_inflation)
   
-  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ OBR FILE IMPORT/IDENTIFY SHEET | END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # Finds the average weekly earnings figures
+  path_awe <- 'Table* (.*):.Labour Market*'
+  info_awe <- grep(path_awe, obr_contents$contents)
+  obr_awe <- obr_contents$contents[info_awe]
+  obr_awe <- gsub(path_awe, '\\1', obr_awe)
   
-  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ OBR FILE MANIPULATION | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # Read the sheet defined by the above in the publication.
+  obr_xlsx_inf = read_excel(temp_obr_xlsx,sheet = obr_inflation)
+  obr_xlsx_inf_unformatted = read_excel(temp_obr_xlsx, sheet = obr_inflation)
+  
+  obr_xlsx_awe = read_excel(temp_obr_xlsx,sheet = obr_awe)
+  obr_xlsx_awe_unformatted = read_excel(temp_obr_xlsx, sheet = obr_awe)
+  
+  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ FILE IMPORT/IDENTIFY SHEET | END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  
+  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ FILE MANIPULATION | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   
   # Clean data to prepare for app
   # Removes empty columns based on if they're entirely 'NA'
-  obr_xlsx <- obr_xlsx[, colSums(is.na(obr_xlsx)) != nrow(obr_xlsx)]
+  obr_xlsx_inf <- obr_xlsx_inf[, colSums(is.na(obr_xlsx_inf)) != nrow(obr_xlsx_inf)]
+  obr_xlsx_awe <- obr_xlsx_awe[, colSums(is.na(obr_xlsx_awe)) != nrow(obr_xlsx_awe)]
   # Removes extra rows if they contain any 'NA'; Column 1 assumed to be 'Period', so name is 'NA'
-  obr_xlsx <- obr_xlsx[complete.cases(obr_xlsx[ , 2:ncol(obr_xlsx)]), ]
+  obr_xlsx_inf <- obr_xlsx_inf[complete.cases(obr_xlsx_inf[ , 2:ncol(obr_xlsx_inf)]), ]
+  obr_xlsx_awe <- obr_xlsx_awe[complete.cases(obr_xlsx_awe[ , 2:ncol(obr_xlsx_awe)]), ]
   
   # Convert first row into column names. Explictly assumes Column 1 is 'Period'.
-  colnames(obr_xlsx)<- obr_xlsx[1,] # copy Row 1 to Column names
-  obr_xlsx <- obr_xlsx[-1,] # deletes Row 1
-  names(obr_xlsx)[1] <- "Period" # creates column name for 'Period'
+  colnames(obr_xlsx_inf)<- obr_xlsx_inf[1,] # copy Row 1 to Column names
+  obr_xlsx_inf <- obr_xlsx_inf[-1,] # deletes Row 1
+  names(obr_xlsx_inf)[1] <- "Period" # creates column name for 'Period'
+  
+  colnames(obr_xlsx_awe)<- obr_xlsx_awe[1,] # copy Row 1 to Column names
+  obr_xlsx_awe <- obr_xlsx_awe[-1,] # deletes Row 1
+  names(obr_xlsx_awe)[1] <- "Period" # creates column name for 'Period'
+  
+  # Removes extra columns in AWE dataset that aren't related to the index of interest
+  awe_columns <- grep("average earnings", colnames(obr_xlsx_awe), ignore.case = TRUE)
+  obr_xlsx_awe <- obr_xlsx_awe[awe_columns]
+  
+  awe_column_yoy <- grep("growth", colnames(obr_xlsx_awe), ignore.case = TRUE)
+  awe_column_index <- grep("index", colnames(obr_xlsx_awe), ignore.case = TRUE)
   
   # Renames new column names based on if they are YoY changes, or Indices
-  colnames(obr_xlsx) <- make.unique(colnames(obr_xlsx))
-  obr_xlsx_yoy <- obr_xlsx %>% select(-ends_with(".1"))
-  obr_xlsx_index <- obr_xlsx %>% select(ends_with(".1"))
-  colnames(obr_xlsx_index) <- paste("index", colnames(obr_xlsx_yoy[2:ncol(obr_xlsx_yoy)]), sep = "_")
-  colnames(obr_xlsx_yoy) <- paste("yoy", colnames(obr_xlsx_yoy), sep = "_")
-  obr_xlsx <- cbind.data.frame(obr_xlsx_yoy, obr_xlsx_index)
+  colnames(obr_xlsx_inf) <- make.unique(colnames(obr_xlsx_inf))
+  obr_xlsx_inf_yoy <- obr_xlsx_inf %>% select(-ends_with(".1"))
+  obr_xlsx_inf_index <- obr_xlsx_inf %>% select(ends_with(".1"))
+  colnames(obr_xlsx_inf_index) <- paste("index", colnames(obr_xlsx_inf_yoy[2:ncol(obr_xlsx_inf_yoy)]), sep = "_")
+  colnames(obr_xlsx_inf_yoy) <- paste("yoy", colnames(obr_xlsx_inf_yoy), sep = "_")
+  
+  names(obr_xlsx_awe)[awe_column_yoy] <- "yoy_Average weekly earnings"
+  names(obr_xlsx_awe)[awe_column_index] <- "index_Average weekly earnings"
+  
+  obr_xlsx_awe_yoy <- obr_xlsx_awe[awe_column_yoy]
+  obr_xlsx_awe_index <- obr_xlsx_awe[awe_column_index]
+  
+  # Combines Inflation & AWE datasets
+  obr_xlsx <- cbind.data.frame(obr_xlsx_inf_yoy, obr_xlsx_awe_yoy, obr_xlsx_inf_index, obr_xlsx_awe_index)
   names(obr_xlsx)[names(obr_xlsx)=="yoy_Period"] <- "Period" #time period reference
   
   # Creates dataframes for data by quarter, annual and financial year splits flexibly (i.e. auto-updates with new spreadsheet)
@@ -124,16 +156,18 @@ if (is_empty(which(latest_url$updatereq == 1) == 0) == FALSE) {
   
   # Creates raw data workbook as .xlsx
   obr_unformatted <- createWorkbook()
-  addWorksheet(obr_unformatted, sheet = "Raw")
-  writeData(obr_unformatted, sheet = "Raw", obr_xlsx_unformatted, colNames = FALSE, rowNames = FALSE)
+  addWorksheet(obr_unformatted, sheet = "Inflation")
+  addWorksheet(obr_unformatted, sheet = "Labour Market")
+  writeData(obr_unformatted, sheet = "Inflation", obr_xlsx_inf_unformatted, colNames = FALSE, rowNames = FALSE)
+  writeData(obr_unformatted, sheet = "Labour Market", obr_xlsx_awe_unformatted, colnames = FALSE, rowNames = FALSE)
   
-  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ OBR FILE MANIPULATION | END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ FILE MANIPULATION | END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   
-  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ OBR FILE SAVE | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ FILE SAVE | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   
   # Save dataframes as both .xlsx and .csv files (only .csv is used in app)
   saveWorkbook(obr, temp_obr_xlsx, overwrite = TRUE)
-  write_file_to_s3("obr.xlsx", paste0("alpha-app-defcalc/",temp_obr_xlsx), overwrite = TRUE)
+  write_file_to_s3("obr.xlsx", paste0("alpha-app-defcalc/", temp_obr_xlsx), overwrite = TRUE)
   
   # Save dataframes as both .xlsx and .csv files (only .csv is used in app)
   saveWorkbook(obr, "obr.xlsx", overwrite = TRUE)
@@ -152,8 +186,9 @@ if (is_empty(which(latest_url$updatereq == 1) == 0) == FALSE) {
   # deletes obr.xlsx from directory
   file.remove(temp_obr_xlsx)
   file.remove("obr.xlsx")
+  file.remove("obr_raw.xlsx")
   file.remove("obr_unformatted.xlsx")
   
 }
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ OBR FILE SAVE | END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ FILE SAVE | END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
