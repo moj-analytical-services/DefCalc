@@ -102,7 +102,7 @@ file.remove("obr_raw.xlsx")
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ FORECAST PERIODS | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Scrapes raw OBR file to find cell containing date information (best available resource)
-date_row <- grep(paste(month.name, collapse ="|"), index_obr_raw[, 1])
+date_row <- grep(paste(month.name, collapse ="|"), index_obr_raw[, 2])
 date_row <- date_row[1]
 date_filter <- index_obr_raw[date_row,]
 date_cell <- date_filter[, colSums(date_filter != "") != 0]
