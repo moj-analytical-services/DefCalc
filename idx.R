@@ -7,6 +7,13 @@ library(rhandsontable) # required to add tabs to UI
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ FILE IMPORT/CLEAN-UP | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+# Links for general documents (will need updating if file name changes unless code is make flexible)
+updateappguidance <- download_file_from_s3("alpha-app-defcalc/IndexationToolGuidance_AppVersion_1.0.pptx", "www/Guidance/IndexationToolGuidance.pptx", overwrite = TRUE)
+
+updategeneralguidance <- download_file_from_s3("alpha-app-defcalc/IndexationGuidance_AppVersion_1.0.docx", "www/Guidance/IndexationGuidance.docx", overwrite = TRUE)
+
+updateintranetlink <- "https://intranet.justice.gov.uk/guidance/procurement/analytics/"
+
 # Download cleaned OBR data .xlsx (mostly not currently in use)
 #download_file_from_s3("alpha-app-defcalc/obr.xlsx", "obr.xlsx", overwrite = TRUE)
 #index_obr_all <- readWorkbook("obr.xlsx", sheet = "all", colNames = TRUE, rowNames = TRUE)
@@ -56,6 +63,7 @@ updateweblink <- ifelse(length(latest_url_csv$weblink[latest_url_csv$updatereq =
                         latest_url_csv$weblink[latest_url_csv$s3 == 1 & latest_url_csv$latest == 1],
                         latest_url_csv$weblink[latest_url_csv$updatereq == 1]
                         )
+
 
 # Selects index drop down options needed for default UI (i.e. removes duplicates)
 index_options <- index_obr_all %>% select(starts_with("yoy_"))
