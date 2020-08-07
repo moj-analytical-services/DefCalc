@@ -26,7 +26,7 @@ ui = fluidPage(
 tabPanel("Guidance",
             tabsetPanel(id = "g_tabs", type = "tabs",
               tabPanel("Overview",
-                h1("Version & Documentation", style = "font-weight: bold; font-family: Arial, Helvetica, sans-serif; border-bottom:1px solid black"),
+                h1("Version", style = "font-weight: bold; font-family: Arial, Helvetica, sans-serif; border-bottom:1px solid black"),
                 p("This version of the DASD Indexation Tool is using data published by the Office for Budget Responsibility (OBR) in the following publication:",
                 tags$a(updatefilename, href= updateweblink, target="_blank"),
                 ".",
