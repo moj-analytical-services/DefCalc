@@ -1,8 +1,7 @@
-packrat/lib*/
-packrat/src
 .Rproj.user
 *.Rproj
 .Rhistory
 core
 www/Guidance/IndexationGuidance.docx
 www/Guidance/IndexationToolGuidance.pptx
+packrat/lib*/
