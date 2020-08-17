@@ -1,0 +1,8 @@
+name: base
+channels:
+  - moj-analytical-services
+  - conda-forge
+  - r
+  - bioconda
+  - defaults
+dependencies:
