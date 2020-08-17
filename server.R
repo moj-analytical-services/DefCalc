@@ -281,7 +281,7 @@ i_download$date <- paste("This spreadsheet was downloaded using the DASD Indexat
                             Sys.Date(),
                             "at",
                             sub("(.*-.*-.*) ","", Sys.time()),
-                            "using OBR: ", 
+                            "using: ", 
                             updateweblink, 
                             sep = " "
                           )
@@ -1440,7 +1440,7 @@ def_download_df = reactive({
                               Sys.Date(), 
                               "at", 
                               sub("(.*-.*-.*) ","", Sys.time()),
-                              "using OBR: ",
+                              "using: ",
                               updateweblink,
                               sep = " "
                              )
@@ -1900,7 +1900,7 @@ disc_download$date <- paste("This spreadsheet was downloaded using the DASD Inde
                             Sys.Date(),
                             "at", 
                             sub("(.*-.*-.*) ","", Sys.time()),
-                            "using OBR: ", 
+                            "using: ", 
                             updateweblink, 
                             sep = " "
                             )
