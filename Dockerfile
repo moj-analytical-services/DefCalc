@@ -19,8 +19,8 @@ RUN npm i -g ministryofjustice/analytics-platform-shiny-server#v0.0.5
 ## -----------------------------------------------------
 ## Uncomment if still using packrat alongside conda
 ## Install packrat itself then packages from packrat.lock
-ADD packrat packrat
-RUN R -e "install.packages('packrat'); packrat::restore()"
+#ADD packrat packrat
+#RUN R -e "install.packages('packrat'); packrat::restore()"
 ## ------------------------------------------------------
 
 # Add shiny app code
