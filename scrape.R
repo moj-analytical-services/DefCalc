@@ -46,7 +46,7 @@ maxi <- max(latest_url$latest[latest_url$exist == TRUE])
 latest_url$latest <- ifelse(latest_url$latest == maxi, 1, 0) 
 # If the URL exists, there is no file in s3 and the month is the latest then an udpate is required.
 latest_url$updatereq <- ifelse((latest_url$exist == TRUE & latest_url$s3 == 0 & latest_url$latest == 1), 1, 0)
-latest_url$weblink <- paste('https://obr.uk/efo/economic-fiscal-outlook', latest_url$Date,sep = "-")
+latest_url$weblink <- paste('https://obr.uk/efo/economic-and-fiscal-outlook', latest_url$Date,sep = "-")
 latest_filename <- latest_url$filename[which(latest_url$latest == 1)]
 
 # Pick out, of the latest_url dataframe, the url that needs to be downloaded and the corresponding filename.
