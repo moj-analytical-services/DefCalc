@@ -30,7 +30,7 @@ Within the DefCalc repository, the following are key files:
 * idx.R; _takes the data from the AWS S3 bucket (alpha-app-defcalc) and then cleans it, and creates some global functions for use in ui.R & server.R_
 * www; _contains several pages used to generate the guidance displayed within the app for users_
 * deploy.json; _describes the parameters required for access (i.e. everyone, approved users only, DOM1 users...)_
-* packrat; _details all packages/dependencies required for the app to load_
+* environment.yml; _details all packages/dependencies required for the app to load_
 
 Within the airflow-DefCalc repository, the following are key files:
 * ds.R; _contains the code that scrapes the website(s) specified for the data required to feed into the app, and saves it to the AWS S3 bucket (alpha-app-defcalc)_
