@@ -21,6 +21,7 @@ dependencies:
   - certifi=2020.6.20=py37hc8dfbb8_0
   - cffi=1.12.2=py37h2e261b9_1
   - chardet=3.0.4=py37_1
+  - conda=4.7.5=py37_0
   - conda-package-handling=1.3.10=py37_0
   - cryptography=2.6.1=py37h1ba5d50_0
   - curl=7.64.1=hf8cf82a_0
@@ -163,6 +164,7 @@ dependencies:
   - r-openssl=1.4=r35h9c8475f_0
   - r-openxlsx=4.1.0=r351h29659fb_0
   - r-packrat=0.5.0=r351h6115d3f_1000
+  - r-pillar=1.4.2=h6115d3f_0
   - r-pkgbuild=1.0.3=r351h6115d3f_0
   - r-pkgconfig=2.0.2=r351h6115d3f_1001
   - r-pkgload=1.0.2=r351h29659fb_1000
@@ -175,7 +177,7 @@ dependencies:
   - r-promises=1.0.1=r351h29659fb_1000
   - r-ps=1.3.0=r351h96ca727_1000
   - r-purrr=0.3.2=r351hcdcec82_0
-  - r-r6=2.4.1=r35h6115d3f_0
+  - r-r6=2.4.0=r351h6115d3f_0
   - r-rcmdcheck=1.3.3=r351h6115d3f_0
   - r-rcolorbrewer=1.1_2=r351h6115d3f_1001
   - r-rcpp=1.0.1=r351h0357c0b_0
@@ -198,10 +200,10 @@ dependencies:
   - r-scales=1.0.0=r351h29659fb_1001
   - r-selectr=0.4_1=r351h6115d3f_1000
   - r-sessioninfo=1.1.1=r351h6115d3f_1000
-  - r-shiny=1.3.2=r35h6115d3f_1
-  - r-shinycssloaders=0.2.0=r351h6115d3f_0
+  - r-shiny=1.3.2=r351h6115d3f_0
+  - r-shinycssloaders=0.3=r35h6115d3f_0
   - r-shinyjs=1.1=r35h6115d3f_0
-  - r-shinywidgets=0.4.3=r351h6115d3f_0
+  - r-shinywidgets=0.5.1=r35h6115d3f_0
   - r-sourcetools=0.1.7=r351hf484d3e_1000
   - r-stringi=1.4.3=r351h0357c0b_0
   - r-stringr=1.4.0=r351h6115d3f_0
