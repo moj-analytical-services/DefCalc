@@ -163,7 +163,6 @@ dependencies:
   - r-openssl=1.4=r35h9c8475f_0
   - r-openxlsx=4.1.0=r351h29659fb_0
   - r-packrat=0.5.0=r351h6115d3f_1000
-  - r-pillar=1.4.2=h6115d3f_0
   - r-pkgbuild=1.0.3=r351h6115d3f_0
   - r-pkgconfig=2.0.2=r351h6115d3f_1001
   - r-pkgload=1.0.2=r351h29659fb_1000
