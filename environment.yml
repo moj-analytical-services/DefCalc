@@ -1,4 +1,4 @@
-name: r_defcalc
+name: rstudio
 channels:
   - conda-forge
   - r
