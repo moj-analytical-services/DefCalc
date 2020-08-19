@@ -18,7 +18,6 @@ dependencies:
   - bleach=3.1.5=pyh9f0ad1d_0
   - bwidget=1.9.14=0
   - bzip2=1.0.8=h516909a_2
-  - c-ares=1.16.1=h516909a_0
   - ca-certificates=2020.6.20=hecda079_0
   - cairo=1.16.0=hcf35c78_1003
   - certifi=2020.6.20=py38h32f6830_0
@@ -59,14 +58,12 @@ dependencies:
   - libcblas=3.8.0=17_openblas
   - libcurl=7.68.0=hda55be3_0
   - libedit=3.1.20191231=he28a2e2_2
-  - libev=4.33=h516909a_0
   - libffi=3.2.1=he1b5a44_1007
   - libgcc-ng=9.3.0=h24d8f2e_15
   - libgfortran-ng=7.5.0=hdf63c60_15
   - libgomp=9.3.0=h24d8f2e_15
   - libiconv=1.16=h516909a_0
   - liblapack=3.8.0=17_openblas
-  - libnghttp2=1.41.0=hab1572f_1
   - libopenblas=0.3.10=pthreads_hb3c22a3_4
   - libpng=1.6.37=hed695b0_2
   - libsodium=1.0.18=h516909a_0
@@ -116,7 +113,6 @@ dependencies:
   - r-backports=1.1.6=r35hcdcec82_1
   - r-base=3.5.1=hc461eb7_1012
   - r-base64enc=0.1_3=r35hcdcec82_1003
-  - r-blob=1.2.1=r35h6115d3f_0
   - r-boot=1.3_25=r35h6115d3f_0
   - r-broom=0.5.6=r35h6115d3f_0
   - r-callr=3.4.3=r35h6115d3f_0
@@ -128,7 +124,6 @@ dependencies:
   - r-cluster=2.1.0=r35h9bbef5b_2
   - r-codetools=0.2_16=r35h6115d3f_1001
   - r-colorspace=1.4_1=r35hcdcec82_1
-  - r-commonmark=1.7=r35hcdcec82_1001
   - r-crayon=1.3.4=r35h6115d3f_1002
   - r-crosstalk=1.1.0.1=r35h6115d3f_0
   - r-curl=4.3=r35hcdcec82_0
@@ -236,7 +231,6 @@ dependencies:
   - r-s3tools=0.0.9=r351_0
   - r-scales=1.1.0=r35h6115d3f_0
   - r-selectr=0.4_2=r35h6115d3f_0
-  - r-shape=1.4.4=r35_1002
   - r-shiny=1.4.0.2=r35h6115d3f_0
   - r-shinycssloaders=0.2.0=r351h6115d3f_0
   - r-shinyjs=1.1=r35h6115d3f_0
@@ -271,11 +265,10 @@ dependencies:
   - r-zip=2.0.4=r35hcdcec82_0
   - r-zoo=1.8_7=r35hcdcec82_0
   - readline=8.0=he28a2e2_2
-  - sed=4.8=hbfbb72e_0
   - send2trash=1.5.0=py_0
   - setuptools=49.6.0=py38h32f6830_0
   - six=1.15.0=pyh9f0ad1d_0
-  - sqlite=3.32.3=h4cf870e_1
+  - sqlite=3.33.0=h4cf870e_0
   - terminado=0.8.3=py38h32f6830_1
   - testpath=0.4.4=py_0
   - tk=8.6.10=hed695b0_0
