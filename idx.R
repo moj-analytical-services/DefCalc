@@ -4,13 +4,14 @@ library(openxlsx) # read in/manipulate Excel files
 library(s3tools) # importing data from AWS
 library(DT) # required to produce output table
 library(rhandsontable) # required to add tabs to UI
+library(officer) # required to download .docx and .pptx
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ FILE IMPORT/CLEAN-UP | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Links for general documents (will need updating if file name changes unless code is make flexible)
-updateappguidance <- download_file_from_s3("alpha-app-defcalc/IndexationToolGuidance_AppVersion_1.0.pptx", "www/Guidance/IndexationToolGuidance.pptx", overwrite = TRUE)
+updateappguidance <- download_file_from_s3("alpha-app-defcalc/IndexationToolGuidance_AppVersion_1.0.pptx", "IndexationToolGuidance.pptx", overwrite = TRUE)
 
-updategeneralguidance <- download_file_from_s3("alpha-app-defcalc/IndexationGuidance_AppVersion_1.0.docx", "www/Guidance/IndexationGuidance.docx", overwrite = TRUE)
+updategeneralguidance <- download_file_from_s3("alpha-app-defcalc/IndexationGuidance_AppVersion_1.0.docx", "IndexationGuidance.docx", overwrite = TRUE)
 
 updateintranetlink <- "https://intranet.justice.gov.uk/guidance/procurement/analytics/"
 
