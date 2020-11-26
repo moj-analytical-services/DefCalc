@@ -16,6 +16,34 @@ source("./idx.R")
 
 # Server logic required to create output
 shinyServer(function(session, input, output) {
+  
+  
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~ GUIDANCE DOWNLOAD OPTIONS | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  
+  
+  output$downloadToolGuidance <- downloadHandler(
+    filename = function() {
+      paste("IndexationToolGuidance - ", Sys.Date(), '.pptx', sep='')
+    },
+    content = function(con) {
+      pptx <- read_pptx("IndexationToolGuidance.pptx")
+      print(pptx, target = con)
+    }
+  )
+  
+  output$downloadIndexationGuidance <- downloadHandler(
+    filename = function() {
+      paste("IndexationGeneralGuidance - ", Sys.Date(), '.docx', sep='')
+    },
+    content = function(con) {
+      docx <- read_docx("IndexationGuidance.docx")
+      print(docx, target = con)
+    }
+  )  
+  
+  
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ GUIDANCE DOWNLOAD OPTIONS | END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~  
+  
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ INDICES TABLE: MAIN | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   

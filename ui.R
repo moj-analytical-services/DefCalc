@@ -27,12 +27,17 @@ tabPanel("Guidance",
             tabsetPanel(id = "g_tabs", type = "tabs",
               tabPanel("Overview",
                 h1("Version", style = "font-weight: bold; font-family: Arial, Helvetica, sans-serif; border-bottom:1px solid black"),
-                p("Version 5.1.6 of the DASD Indexation Tool is using data published by the Office for Budget Responsibility (OBR) in the following publication:",
+                p("Version 6.0.0 of the DASD Indexation Tool is using data published by the Office for Budget Responsibility (OBR) in the following publication:",
                 tags$a(updatefilename, href= updateweblink, target="_blank"),
                 ".",
                 style = "margin-left: 1em"
                 ),
-                htmlTemplate("www/MainPage.html"), width = 12
+                htmlTemplate("www/MainPage1.html"), 
+                p("Supporting guidance documentation can be found here:"),
+                h5(tags$li(downloadLink("downloadToolGuidance", label = "Indexation Tool Guidance"))),
+                h5(tags$li(downloadLink("downloadIndexationGuidance", label = "General Indexation Guidance"))),
+                h5(tags$li(tags$a("Commercial and Contract Management Analytics (Intranet Webpage)", href = updateintranetlink, target="_blank"))),
+                htmlTemplate("www/MainPage2.html"), width = 12
               ),
               tabPanel("FAQ",
                      htmlTemplate("www/FAQ.html"), width = 12
