@@ -12,11 +12,10 @@ library(shinyWidgets)
 library(shinyjs)
 library(shinycssloaders)
 
-source("./idx.R")
-
 # Server logic required to create output
 shinyServer(function(session, input, output) {
   
+source("./idx.R") # sourced here to ensure it picks up the latest data for the user's session
   
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~ GUIDANCE DOWNLOAD OPTIONS | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~
   
