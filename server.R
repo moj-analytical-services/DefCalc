@@ -7,6 +7,8 @@
 #     http://shiny.rstudio.com/
 # 
 
+source("./idx.R") # will not auto update, requires app refresh
+
 library(shiny)
 library(shinyWidgets)
 library(shinyjs)
@@ -14,8 +16,7 @@ library(shinycssloaders)
 
 # Server logic required to create output
 shinyServer(function(session, input, output) {
-  
-source("./idx.R") # sourced here to ensure it picks up the latest data for the user's session
+ 
   
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~ GUIDANCE DOWNLOAD OPTIONS | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~
   
