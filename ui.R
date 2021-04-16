@@ -18,6 +18,7 @@ source("./idx.R")
 
 ui = fluidPage(
       useShinyjs(),
+      tags$head(includeHTML(("google-analytics.html"))),
       htmlTemplate("www/Top_B.html"),
       navbarPage("",
 
