@@ -133,11 +133,11 @@ if (is_empty(which(latest_url$updatereq == 1) == 0) == FALSE) {
                   "megan.chambers@justice.gov.uk")
   
   # Must be added as members of the team on 'gov.uk/notify'
-#  for (i in 1:length(email_list)) {
-#    
-#  send_contributor_email(email_list[i],
-#                          jason_table)
-#  }
+ for (i in 1:length(email_list)) {
+
+ send_contributor_email(email_list[i],
+                         jason_table)
+ }
   
   
   # Import online Excel OBR datafile into R, through an indirect URL
@@ -261,12 +261,16 @@ if (is_empty(which(latest_url$updatereq == 1) == 0) == FALSE) {
   botor::s3_upload_file("obr_unformatted.xlsx", "s3://alpha-app-defcalc/obr_raw.xlsx")
   
   write.csv(obr_xlsx, "obr_all.csv", row.names = TRUE)
+  botor::s3_upload_file("obr_all.csv", "s3://alpha-capital-maintenance-model/obr-data/obr_all.csv") # For model
   botor::s3_upload_file("obr_all.csv", "s3://alpha-app-defcalc/obr_all.csv")
   write.csv(obr_xlsx_fy, "obr_fy.csv", row.names = TRUE)
+  botor::s3_upload_file("obr_fy.csv", "s3://alpha-capital-maintenance-model/obr-data/obr_fy.csv") # For model
   botor::s3_upload_file("obr_fy.csv", "s3://alpha-app-defcalc/obr_fy.csv")
   write.csv(obr_xlsx_qtr, "obr_qtr.csv", row.names = TRUE)
+  botor::s3_upload_file("obr_qtr.csv", "s3://alpha-capital-maintenance-model/obr-data/obr_qtr.csv") # For model
   botor::s3_upload_file("obr_qtr.csv", "s3://alpha-app-defcalc/obr_qtr.csv")
   write.csv(obr_xlsx_pa, "obr_pa.csv", row.names = TRUE)
+  botor::s3_upload_file("obr_pa.csv", "s3://alpha-capital-maintenance-model/obr-data/obr_pa.csv") # For model
   botor::s3_upload_file("obr_pa.csv", "s3://alpha-app-defcalc/obr_pa.csv")
   
   # Create .csv with just the filename of the latest download in it. 
