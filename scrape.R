@@ -3,7 +3,7 @@ library(httr)
 library(readxl) 
 library(openxlsx) # read in/manipulate Excel files
 library(tidyverse) # dplyr & readr & stringr (plus other functionalities)
-library(s3tools) # importing data from AWS
+library(botor) # importing data from AWS
 library(RCurl) # get information relating to a URL
 library(xml2) # required for rvest
 library(rvest) # get information relating to a URL
@@ -67,13 +67,13 @@ for (i in 1:nrow(latest_url)) {
 print("Print Statement: Latest EFO version identified")
 
 # Test if files are in S3 and if they're not then indicate the URL that needs to be downloaded.
-s3files <- s3tools::list_files_in_buckets('alpha-app-defcalc')
+s3files <- botor::s3_ls('s3://alpha-app-defcalc')
 mypattern = 'Economy_supplementary_tables_(.*).*'
 
 # Find the pattern above in the list of s3 files, this tells you the number of the file in that list.
-gg = grep(mypattern, s3files$filename)  
+gg = grep(mypattern, s3files$key)  
 # Create a variable called econ, which is the filename of the file that contains the pattern.
-econ = s3files$filename[gg]  
+econ = s3files$key[gg]  
 # Identify which hyperlink / file in the latest_url dataframe corresponds to the file in s3.
 latest_url$s3 <- ifelse((latest_url$filename %in% econ), 1, 0)   
 # Create new column that formats the month-year column into a date format (e.g. dd/mm/yyyy).
@@ -105,12 +105,12 @@ if (is_empty(which(latest_url$updatereq == 1) == 0) == FALSE) {
   send_contributor_email = function(contrib_email, QA_table){
     
     # Read in python email function
-    reticulate::source_python("./gov_notify.py")
+    reticulate::source_python("gov_notify.py")
     
     # Get api key
-    api_key_raw = s3tools::read_using(
-      read.delim,
-      s3_path = 'alpha-app-defcalc/indexationtool_api.txt',
+    api_key_raw = botor::s3_read(
+      "s3://alpha-app-defcalc/indexationtool_api.txt",
+      utils::read.delim,
       header = FALSE,
       sep = "",
       quote = ""
@@ -133,11 +133,11 @@ if (is_empty(which(latest_url$updatereq == 1) == 0) == FALSE) {
                   "megan.chambers@justice.gov.uk")
   
   # Must be added as members of the team on 'gov.uk/notify'
-  for (i in 1:length(email_list)) {
-    
-  send_contributor_email(email_list[i],
-                          jason_table)
-  }
+#  for (i in 1:length(email_list)) {
+#    
+#  send_contributor_email(email_list[i],
+#                          jason_table)
+#  }
   
   
   # Import online Excel OBR datafile into R, through an indirect URL
@@ -155,6 +155,7 @@ if (is_empty(which(latest_url$updatereq == 1) == 0) == FALSE) {
   info_inflation = grep(path_inflation, obr_contents$contents)
   obr_inflation <- obr_contents$contents[info_inflation]
   obr_inflation <- gsub(path_inflation, '\\1', obr_inflation)
+  obr_inflation <- obr_inflation[which(!grep1(" ", obr_inflation))]
   
   # Finds the average weekly earnings figures
   path_awe <- 'Table* (.*):.Labour Market*'
@@ -251,30 +252,30 @@ if (is_empty(which(latest_url$updatereq == 1) == 0) == FALSE) {
   
   # Save dataframes as both .xlsx and .csv files (only .csv is used in app)
   # saveWorkbook(obr, temp_obr_xlsx, overwrite = TRUE)
-  # write_file_to_s3("obr.xlsx", paste0("alpha-app-defcalc/", temp_obr_xlsx), overwrite = TRUE)
+  # botor::s3_upload_file("obr.xlsx", paste0("s3://alpha-app-defcalc/", temp_obr_xlsx))
   
   # Save dataframes as both .xlsx and .csv files (only .csv is used in app)
   saveWorkbook(obr, "obr.xlsx", overwrite = TRUE)
-  write_file_to_s3("obr.xlsx", "alpha-app-defcalc/obr.xlsx", overwrite = TRUE)
+  botor::s3_upload_file("obr.xlsx", "s3://alpha-app-defcalc/obr.xlsx")
   saveWorkbook(obr_unformatted, "obr_unformatted.xlsx", overwrite = TRUE)
-  write_file_to_s3("obr_unformatted.xlsx", "alpha-app-defcalc/obr_raw.xlsx", overwrite = TRUE)
+  botor::s3_upload_file("obr_unformatted.xlsx", "s3://alpha-app-defcalc/obr_raw.xlsx")
   
   write.csv(obr_xlsx, "obr_all.csv", row.names = TRUE)
-  write_file_to_s3("obr_all.csv", "alpha-app-defcalc/obr_all.csv", overwrite = TRUE)
+  botor::s3_upload_file("obr_all.csv", "s3://alpha-app-defcalc/obr_all.csv")
   write.csv(obr_xlsx_fy, "obr_fy.csv", row.names = TRUE)
-  write_file_to_s3("obr_fy.csv", "alpha-app-defcalc/obr_fy.csv", overwrite = TRUE)
+  botor::s3_upload_file("obr_fy.csv", "s3://alpha-app-defcalc/obr_fy.csv")
   write.csv(obr_xlsx_qtr, "obr_qtr.csv", row.names = TRUE)
-  write_file_to_s3("obr_qtr.csv", "alpha-app-defcalc/obr_qtr.csv", overwrite = TRUE)
+  botor::s3_upload_file("obr_qtr.csv", "s3://alpha-app-defcalc/obr_qtr.csv")
   write.csv(obr_xlsx_pa, "obr_pa.csv", row.names = TRUE)
-  write_file_to_s3("obr_pa.csv", "alpha-app-defcalc/obr_pa.csv", overwrite = TRUE)
+  botor::s3_upload_file("obr_pa.csv", "s3://alpha-app-defcalc/obr_pa.csv")
   
   # Create .csv with just the filename of the latest download in it. 
   write.csv(obr_xlsx, latest_filename)
-  write_file_to_s3(latest_filename, paste0("alpha-app-defcalc/", latest_filename), overwrite = TRUE)
+  botor::s3_upload_file(latest_filename, paste0("s3://alpha-app-defcalc/", latest_filename))
   
   # Create .csv with just fhe filename of the latest url in it
   write.csv(latest_url, "latest_url.csv")
-  write_file_to_s3("latest_url.csv", "alpha-app-defcalc/latest_url.csv", overwrite = TRUE)
+  botor::s3_upload_file("latest_url.csv", "s3://alpha-app-defcalc/latest_url.csv")
   
   # deletes obr.xlsx from directory
   file.remove(temp_obr_xlsx)
