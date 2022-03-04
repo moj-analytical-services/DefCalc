@@ -1,7 +1,7 @@
 # Necessary packages
 library(tidyverse) # dplyr & readr & stringr (plus other functionalities)
 library(openxlsx) # read in/manipulate Excel files
-library(s3tools) # importing data from AWS
+library(botor) # importing data from AWS
 library(DT) # required to produce output table
 library(rhandsontable) # required to add tabs to UI
 library(officer) # required to download .docx and .pptx
@@ -9,45 +9,45 @@ library(officer) # required to download .docx and .pptx
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ FILE IMPORT/CLEAN-UP | START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Links for general documents (will need updating if file name changes unless code is make flexible)
-updateappguidance <- download_file_from_s3("alpha-app-defcalc/IndexationToolGuidance_AppVersion_1.0.pptx", "IndexationToolGuidance.pptx", overwrite = TRUE)
+updateappguidance <- botor::s3_download_file("s3://alpha-app-defcalc/IndexationToolGuidance_AppVersion_1.0.pptx", "IndexationToolGuidance.pptx", force = TRUE)
 
-updategeneralguidance <- download_file_from_s3("alpha-app-defcalc/IndexationGuidance_AppVersion_1.0.docx", "IndexationGuidance.docx", overwrite = TRUE)
+updategeneralguidance <- botor::s3_download_file("s3://alpha-app-defcalc/IndexationGuidance_AppVersion_1.0.docx", "IndexationGuidance.docx", force = TRUE)
 
 updateintranetlink <- "https://intranet.justice.gov.uk/guidance/procurement/analytics/"
 
 # Download cleaned OBR data .xlsx (mostly not currently in use)
-#download_file_from_s3("alpha-app-defcalc/obr.xlsx", "obr.xlsx", overwrite = TRUE)
+#botor::s3_download_file("s3://alpha-app-defcalc/obr.xlsx", "obr.xlsx", force = TRUE)
 #index_obr_all <- readWorkbook("obr.xlsx", sheet = "all", colNames = TRUE, rowNames = TRUE)
 #index_obr_qtr <- readWorkbook("obr.xlsx", sheet = "qtr", colNames = TRUE, rowNames = TRUE)
 #index_obr_pa <- readWorkbook("obr.xlsx", sheet = "pa", colNames = TRUE, rowNames = TRUE)
 #index_obr_fy <- readWorkbook("obr.xlsx", sheet = "fy", colNames = TRUE, rowNames = TRUE)
-download_file_from_s3("alpha-app-defcalc/obr_raw.xlsx", "obr_raw.xlsx", overwrite = TRUE)
+botor::s3_download_file("s3://alpha-app-defcalc/obr_raw.xlsx", "obr_raw.xlsx", force = TRUE)
 index_obr_raw <- readWorkbook("obr_raw.xlsx", sheet = "Inflation", colNames = TRUE)
 index_obr_raw <- index_obr_raw %>% replace(., is.na(.), "")
 names(index_obr_raw)[2:ncol(index_obr_raw)] <- ""
 
 # Download cleaned OBR data .csv, re-adds rownames, and adds 'do-nothing' index
-index_obr_all <- s3_path_to_full_df("alpha-app-defcalc/obr_all.csv")
+index_obr_all <- botor::s3_read("s3://alpha-app-defcalc/obr_all.csv", read.csv)
 index_obr_all <- data.frame(index_obr_all, row.names = 1)
 index_obr_all <- add_column(index_obr_all, "yoy_None" = 0, .after = ncol(index_obr_all)/2)
 index_obr_all <- add_column(index_obr_all, "index_None" = 100, .after = ncol(index_obr_all))
 
-index_obr_qtr <- s3_path_to_full_df("alpha-app-defcalc/obr_qtr.csv")
+index_obr_qtr <- botor::s3_read("s3://alpha-app-defcalc/obr_qtr.csv", read.csv)
 index_obr_qtr <- data.frame(index_obr_qtr, row.names = 1)
 index_obr_qtr <- add_column(index_obr_qtr, "yoy_None" = 0, .after = ncol(index_obr_qtr)/2)
 index_obr_qtr <- add_column(index_obr_qtr, "index_None" = 100, .after = ncol(index_obr_qtr))
 
-index_obr_pa <- s3_path_to_full_df("alpha-app-defcalc/obr_pa.csv")
+index_obr_pa <- botor::s3_read("s3://alpha-app-defcalc/obr_pa.csv", read.csv)
 index_obr_pa <- data.frame(index_obr_pa, row.names = 1)
 index_obr_pa <- add_column(index_obr_pa, "yoy_None" = 0, .after = ncol(index_obr_pa)/2)
 index_obr_pa <- add_column(index_obr_pa, "index_None" = 100, .after = ncol(index_obr_pa))
 
-index_obr_fy <- s3_path_to_full_df("alpha-app-defcalc/obr_fy.csv")
+index_obr_fy <- botor::s3_read("s3://alpha-app-defcalc/obr_fy.csv", read.csv)
 index_obr_fy <- data.frame(index_obr_fy, row.names = 1)
 index_obr_fy <- add_column(index_obr_fy, "yoy_None" = as.numeric(0), .after = ncol(index_obr_fy)/2)
 index_obr_fy <- add_column(index_obr_fy, "index_None" = as.numeric(100), .after = ncol(index_obr_fy))
 
-latest_url_csv <- s3_path_to_full_df("alpha-app-defcalc/latest_url.csv")
+latest_url_csv <- botor::s3_read("s3://alpha-app-defcalc/latest_url.csv", read.csv)
 latest_url_csv <- data.frame(latest_url_csv, row.names = 1)
 
 # Tidy up the filenames in the latest_url_csv df to remove underscores and file extension.
