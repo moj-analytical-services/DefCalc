@@ -24,7 +24,7 @@ COPY requirements.txt .
 RUN python3 -m pip install -r requirements.txt
 
 # Add shiny app code
-ADD . .
+COPY . .
 
 USER shiny
 CMD analytics-platform-shiny-server
