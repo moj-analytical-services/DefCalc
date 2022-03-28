@@ -1,4 +1,4 @@
-FROM quay.io/mojanalytics/rshiny:3.5.1
+FROM 593291632749.dkr.ecr.eu-west-1.amazonaws.com/rshiny:local
 
 ENV PATH="/opt/shiny-server/bin:/opt/shiny-server/ext/node/bin:${PATH}"
 ENV SHINY_APP=/srv/shiny-server
@@ -8,20 +8,20 @@ WORKDIR /srv/shiny-server
 
 # ENV SHINY_GAID <your google analytics token here>
 
-# Add environment file individually so that next install command
-# can be cached as an image layer separate from application code
-ADD environment.yml environment.yml
+# Install python3 and essentials 
+RUN apt-get update
+RUN apt-get install -y python3 python3-pip python3-venv python3-dev
+# Make sure reticulate uses the system Python
+ENV RETICULATE_PYTHON="/usr/bin/python3"
 
-# Install packrat itself then packages from packrat.lock
-RUN conda env update --file environment.yml -n base
-RUN npm i -g ministryofjustice/analytics-platform-shiny-server#v0.0.5
+# use renv for packages
+ADD renv.lock renv.lock
+RUN R -e "install.packages('renv')"
+RUN R -e 'renv::restore()'
 
-## -----------------------------------------------------
-## Uncomment if still using packrat alongside conda
-## Install packrat itself then packages from packrat.lock
-#ADD packrat packrat
-#RUN R -e "install.packages('packrat'); packrat::restore()"
-## ------------------------------------------------------
+# Add Python package requirements and install
+COPY requirements.txt .
+RUN python3 -m pip install -r requirements.txt
 
 # Add shiny app code
 ADD . .
