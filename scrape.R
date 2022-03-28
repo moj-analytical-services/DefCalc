@@ -155,7 +155,7 @@ if (is_empty(which(latest_url$updatereq == 1) == 0) == FALSE) {
   info_inflation = grep(path_inflation, obr_contents$contents)
   obr_inflation <- obr_contents$contents[info_inflation]
   obr_inflation <- gsub(path_inflation, '\\1', obr_inflation)
-  obr_inflation <- obr_inflation[which(!grep1(" ", obr_inflation))]
+  obr_inflation <- obr_inflation[which(!grepl(" ", obr_inflation))]
   
   # Finds the average weekly earnings figures
   path_awe <- 'Table* (.*):.Labour Market*'
