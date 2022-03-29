@@ -8,11 +8,13 @@ WORKDIR /srv/shiny-server
 
 # ENV SHINY_GAID <your google analytics token here>
 
+RUN npm i -g ministryofjustice/analytics-platform-shiny-server#v0.0.5
+
 # Install python3 and essentials 
-RUN apt-get update
-RUN apt-get install -y python3 python3-pip python3-venv python3-dev
-# Make sure reticulate uses the system Python
-ENV RETICULATE_PYTHON="/usr/bin/python3"
+RUN apt-get update -y && \
+  apt-get install -y python3 python3-pip python3-venv && \
+  apt-get clean && \
+  rm -rf /var/lib/apt/lists/*
 
 # use renv for packages
 ADD renv.lock renv.lock
@@ -20,11 +22,11 @@ RUN R -e "install.packages('renv')"
 RUN R -e 'renv::restore()'
 
 # Add Python package requirements and install
-COPY requirements.txt .
-RUN python3 -m pip install -r requirements.txt
+COPY requirements.txt requirements.txt
+RUN pip3 install -r requirements.txt
 
 # Add shiny app code
-COPY . .
+ADD . .
 
 USER shiny
 CMD analytics-platform-shiny-server
