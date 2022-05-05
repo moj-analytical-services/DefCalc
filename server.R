@@ -203,7 +203,7 @@ observe({
         
         # Is the base year, and not forecast ('round()' required for 'Default' option)
         mutate(is_base = ifelse ({
-                                !grepl(paste(year_forecast, collapse ="|"), Period) &
+                                !Period%in%unlist(year_forecast) &
                                 (round(Index, digits = 2)) == 100
                                 }
                                 ,
@@ -215,7 +215,7 @@ observe({
         
         # Is forecast, but not base year
         mutate(is_forecast = ifelse ({
-                                    grepl(paste(year_forecast, collapse ="|"), Period) &
+          Period%in%unlist(year_forecast) &
                                     (round(Index, digits = 2)) != 100
                                     }
                                     ,
@@ -227,8 +227,8 @@ observe({
         
         # Is base year and forecast
         mutate(is_forecast_base = ifelse ({
-                                          grepl(paste(year_forecast, collapse ="|"), Period) &
-                                          (round(Index, digits = 0)) == 100
+          Period%in%unlist(year_forecast) &
+                                          (round(Index, digits = 2)) == 100
                                           }
                                           ,
                                             1
