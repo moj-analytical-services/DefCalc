@@ -72,10 +72,10 @@
     },
     "Rcpp": {
       "Package": "Rcpp",
-      "Version": "1.0.6",
+      "Version": "1.0.7",
       "Source": "Repository",
       "Repository": "RSPM",
-      "Hash": "dbb5e436998a7eba5a9d682060533338"
+      "Hash": "97fe71f0a4a1c9890e6c2128afa04bc0"
     },
     "askpass": {
       "Package": "askpass",

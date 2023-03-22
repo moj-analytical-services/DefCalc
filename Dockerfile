@@ -8,7 +8,7 @@ WORKDIR /srv/shiny-server
 
 # ENV SHINY_GAID <your google analytics token here>
 
-RUN npm i -g ministryofjustice/analytics-platform-shiny-server#v0.0.5
+RUN wget https://github.com/ministryofjustice/analytics-platform-shiny-server/archive/refs/tags/v0.0.5.tar.gz -O /tmp/analytics-platform-shiny-server.tar.gz && npm i -g /tmp/analytics-platform-shiny-server.tar.gz
 
 # Install python3 and essentials 
 RUN apt-get update -y && \
@@ -18,8 +18,11 @@ RUN apt-get update -y && \
 
 # use renv for packages
 ADD renv.lock renv.lock
-RUN R -e "install.packages('renv')"
-RUN R -e 'renv::restore()'
+
+ENV RENV_VERSION 0.14.0
+RUN R -e "install.packages('remotes', repos = c(CRAN = 'https://cloud.r-project.org'))"
+RUN R -e "remotes::install_github('rstudio/renv@${RENV_VERSION}')"
+RUN R --vanilla -s -e 'renv::restore()'
 
 # Add Python package requirements and install
 COPY requirements.txt requirements.txt
