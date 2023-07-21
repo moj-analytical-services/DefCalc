@@ -25,8 +25,7 @@ To link the project to RStudio, it is recommended to clone the repositories usin
 ### Key Files
 Within the DefCalc repository, the following are key files:
 * ui.R; _contains the code for producing the user interface of the app_
-* server.R; _contains the bulk of the code for the app. This includes generating all of the table(s), manipulating the data, download functionality etc. It is set out loosely by 'section' such that each tool has its own scope_
-* www; _contains several pages used to generate the guidance displayed within the app for users_
+* server.R; _contains the bulk of the code for the functions of the app_
 * renv.lock; _details all packages/dependencies required for the app to load_
 
 
