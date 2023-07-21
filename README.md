@@ -29,5 +29,13 @@ Within the DefCalc repository, the following are key files:
 * www; _contains several pages used to generate the guidance displayed within the app for users_
 * renv.lock; _details all packages/dependencies required for the app to load_
 
+
+### Updating
+The underlying data for this app will require updating with each new OBR inflation forecasts, typically occuring in line with major policy announcements (e.g., Spring Budget)
+* Update the inflation data in the S3 webapp bucket alpha-app-defcalc
+  * Update DA_inflation_tool_indexation_table_Month_YYYY.xlsx, renaming so it matches the current month
+  * In the server.R file, update the botor::s3_read functions under HISTORIC INDEX DATA TABLES section to match the s3 bucket filepath
+* Update the weblinks in the server.R file for OBR DATA section to match OBR's latest forecasts
+
 ### Deployment
 When ready to deploy new releases, newly published releases should adhere to the following versioning formats: https://semver.org/
