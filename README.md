@@ -34,9 +34,9 @@ Within the DefCalc repository, the following are key files:
 The underlying data for this app will require updating with each new OBR inflation forecasts, typically occuring in line with major policy announcements (e.g., Spring Budget)
 * Update the inflation data in the S3 webapp bucket alpha-app-defcalc
   * Update DA_inflation_tool_indexation_table_Month_YYYY.xlsx, renaming so it matches the current month
-  * In the server.R file, update the botor::s3_read functions under HISTORIC INDEX DATA TABLES section to match the s3 bucket filepath
-* Update the weblinks in the server.R file for OBR DATA section to match OBR's latest forecasts
-* Update version number on HOMEPAGE
+  * In the server.R file, update the _botor::s3_read_ functions under _HISTORIC INDEX DATA TABLES_ section to match the s3 bucket filepath
+* Update the weblinks in the server.R file for _OBR DATA_ section to match OBR's latest forecasts
+* Update version number on _HOMEPAGE_
 
 **Future Updates**
 * Switch excel tool to xlsm version (already in www/ folder) - this will require different package to "officer" and changes to the code. Will also need to update the guidance
