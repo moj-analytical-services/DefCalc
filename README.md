@@ -28,6 +28,10 @@ Within the DefCalc repository, the following are key files:
 * server.R; _contains the bulk of the code for the functions of the app_
 * renv.lock; _details all packages/dependencies required for the app to load_
 
+**Botor**
+* Users/developers will need to install the botor package in order to run the code. This is so that the app can access its own web bucket.
+* Guidance on installing can be found here: https://github.com/daroczig/botor
+
 
 ### Updating
 The underlying data for this app will require updating with each new OBR inflation forecasts, typically occuring in line with major policy announcements (e.g., Spring Budget)
