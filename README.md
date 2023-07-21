@@ -36,6 +36,11 @@ The underlying data for this app will require updating with each new OBR inflati
   * Update DA_inflation_tool_indexation_table_Month_YYYY.xlsx, renaming so it matches the current month
   * In the server.R file, update the botor::s3_read functions under HISTORIC INDEX DATA TABLES section to match the s3 bucket filepath
 * Update the weblinks in the server.R file for OBR DATA section to match OBR's latest forecasts
+* Update version number on HOMEPAGE
+
+**Future Updates**
+* Switch excel tool to xlsm version (already in www/ folder) - this will require different package to "officer" and changes to the code. Will also need to update the guidance
+* Upload all presentations and supporting documents (including excel tool) into the s3 bucket and change code in the server.R file to read them in from s3 
 
 ### Deployment
 When ready to deploy new releases, newly published releases should adhere to the following versioning formats: https://semver.org/
